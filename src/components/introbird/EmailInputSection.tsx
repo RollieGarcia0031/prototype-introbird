@@ -110,7 +110,7 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
   const handleFormAction = (formData: FormData) => {
     const primaryContent = formData.get("primaryContent") as string;
     setPrimaryInput(primaryContent);
-    formData.set("selectedMode", selectedMode);
+    formData.set("selectedMode", selectedMode); // Ensure selectedMode is part of formData
     if (modeConfigs[selectedMode].hasToneAndLimitOptions) {
       if (selectedTone) {
         formData.set("tone", selectedTone);
@@ -180,11 +180,12 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
               className="min-h-[150px] resize-y"
               required
             />
+            {/* Hidden input to ensure selectedMode is always part of the form data */}
             <input type="hidden" name="selectedMode" value={selectedMode} />
           </div>
           
           {currentConfig.hasToneAndLimitOptions && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
               <div>
                 <Label htmlFor="tone" className="text-base font-medium">Tone/Style (Optional)</Label>
                 <Select name="tone" value={selectedTone} onValueChange={setSelectedTone}>
