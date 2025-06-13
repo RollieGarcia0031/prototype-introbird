@@ -13,16 +13,18 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import AppHeader from '@/components/introbird/AppHeader';
-import { Settings, Palette as CustomizationIcon, Loader2, Home } from "lucide-react"; // Added Home icon
+import { Settings, Palette as CustomizationIcon, Loader2, Home } from "lucide-react";
 import React from 'react';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 
 
-const RootLayoutContent = ({ children }: { children: React.ReactNode }) => {
+const RootLayoutInternal = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
+  const { setOpenMobile, isMobile } = useSidebar();
 
   if (loading) {
     return (
@@ -32,8 +34,14 @@ const RootLayoutContent = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
+  const handleMobileLinkClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
   return (
-    <SidebarProvider defaultOpen={false}>
+    <>
       <Sidebar collapsible="icon">
         <SidebarHeader className="p-2 flex items-center justify-center border-b">
           <SidebarTrigger />
@@ -42,7 +50,7 @@ const RootLayoutContent = ({ children }: { children: React.ReactNode }) => {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Application Assistant">
-                <Link href="/">
+                <Link href="/" onClick={handleMobileLinkClick}>
                   <Home />
                   <span className="group-data-[state=collapsed]:hidden">Application Assistant</span>
                 </Link>
@@ -55,7 +63,7 @@ const RootLayoutContent = ({ children }: { children: React.ReactNode }) => {
                 disabled={!user || loading}
                 aria-disabled={!user || loading}
               >
-                <Link href="/customization">
+                <Link href="/customization" onClick={handleMobileLinkClick}>
                   <CustomizationIcon />
                   <span className="group-data-[state=collapsed]:hidden">Customization</span>
                 </Link>
@@ -76,7 +84,7 @@ const RootLayoutContent = ({ children }: { children: React.ReactNode }) => {
           {children}
         </SidebarInset>
       </div>
-    </SidebarProvider>
+    </>
   );
 };
 
@@ -96,11 +104,19 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <AuthProvider> {/* Wrap with AuthProvider */}
-          <RootLayoutContent>{children}</RootLayoutContent>
+        <AuthProvider>
+          <SidebarProvider defaultOpen={false}> {/* SidebarProvider now wraps RootLayoutInternal */}
+            <RootLayoutInternal>{children}</RootLayoutInternal>
+          </SidebarProvider>
         </AuthProvider>
         <Toaster />
       </body>
     </html>
   );
 }
+
+// To avoid renaming RootLayoutContent everywhere it might be referenced internally by Next.js or other tooling,
+// I've wrapped the original RootLayoutContent logic into a new component RootLayoutInternal.
+// RootLayout now provides AuthProvider and then SidebarProvider, and RootLayoutInternal consumes them.
+// The component previously named RootLayoutContent is effectively now RootLayoutInternal.
+// No other file needs to change as the export from this file is still `RootLayout`.
