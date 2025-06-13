@@ -71,8 +71,10 @@ export default function IntroBirdPage() {
       </main>
       <footer className="py-8 text-center text-muted-foreground text-sm">
         <p>&copy; {new Date().getFullYear()} IntroBird. All rights reserved.</p>
-        {/* Removed OpenAI API key specific note as the package is currently unavailable */}
+        {/* <p>To use OpenAI models, ensure your OPENAI_API_KEY is set in your environment.</p> */}
+        <p>OpenAI models are temporarily unavailable due to package installation issues.</p>
       </footer>
     </div>
   );
 }
+

@@ -6,3 +6,4 @@ export const AVAILABLE_MODELS = {
   // OPENAI_GPT_4O_MINI: 'openai/gpt-4o-mini', // Commented out due to install issues
   // OPENAI_GPT_3_5_TURBO: 'openai/gpt-3.5-turbo', // Commented out due to install issues
 };
+
