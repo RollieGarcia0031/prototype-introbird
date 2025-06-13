@@ -5,9 +5,12 @@ import { generateReplySuggestions } from "@/ai/flows/generate-reply-suggestions"
 import { improveReplyDraft } from "@/ai/flows/improve-reply-draft";
 import { z } from "zod";
 
-// Schema for received email input
-const ReceivedEmailSchema = z.object({
-  emailContent: z.string().min(10, "Email content must be at least 10 characters long."),
+// Schema for received email input / primary content input
+const PrimaryContentSchema = z.object({
+  primaryContent: z.string().min(10, "Input content must be at least 10 characters long."),
+  selectedMode: z.enum(['reply', 'jobPosting', 'casualMessage'], {
+    errorMap: () => ({ message: "Invalid mode selected." })
+  }),
 });
 
 // Schema for reply draft input
@@ -17,29 +20,35 @@ const ReplyDraftSchema = z.object({
 
 // Schema for saving interaction
 const SaveInteractionSchema = z.object({
-  receivedEmail: z.string().min(10),
+  receivedEmail: z.string().min(10), // This might need to be more generic if saving non-email interactions
   reply: z.string().min(5),
+  // selectedMode: z.enum(['reply', 'jobPosting', 'casualMessage']).optional(), // If you want to save the mode
 });
 
 export async function generateRepliesAction(prevState: any, formData: FormData) {
   const rawFormData = {
-    emailContent: formData.get("emailContent") as string,
+    primaryContent: formData.get("primaryContent") as string,
+    selectedMode: formData.get("selectedMode") as "reply" | "jobPosting" | "casualMessage",
   };
 
-  const validatedFields = ReceivedEmailSchema.safeParse(rawFormData);
+  const validatedFields = PrimaryContentSchema.safeParse(rawFormData);
 
   if (!validatedFields.success) {
     return {
-      error: "Invalid email content. " + (validatedFields.error.issues[0]?.message || ""),
+      error: "Invalid input. " + (validatedFields.error.issues[0]?.message || ""),
       suggestions: [],
     };
   }
 
   try {
-    const result = await generateReplySuggestions({ emailContent: validatedFields.data.emailContent });
+    // Map primaryContent to emailContent for the AI flow for now
+    const result = await generateReplySuggestions({ 
+      emailContent: validatedFields.data.primaryContent, // Flow expects emailContent
+      selectedMode: validatedFields.data.selectedMode 
+    });
     return { suggestions: result.suggestions, error: null };
   } catch (error) {
-    console.error("Error generating reply suggestions:", error);
+    console.error("Error generating suggestions:", error);
     return { error: "Failed to generate suggestions. Please try again.", suggestions: [] };
   }
 }
@@ -59,6 +68,7 @@ export async function improveDraftAction(prevState: any, formData: FormData) {
   }
 
   try {
+    // Note: improveReplyDraft might also need to be mode-aware in the future
     const result = await improveReplyDraft({ draft: validatedFields.data.draft });
     return { refinedDraft: result.refinedDraft, error: null };
   } catch (error) {
@@ -69,8 +79,9 @@ export async function improveDraftAction(prevState: any, formData: FormData) {
 
 export async function saveInteractionAction(prevState: any, formData: FormData) {
   const rawFormData = {
-    receivedEmail: formData.get("receivedEmail") as string,
+    receivedEmail: formData.get("receivedEmail") as string, // Stays as receivedEmail for now
     reply: formData.get("reply") as string,
+    // selectedMode: formData.get("selectedMode") as "reply" | "jobPosting" | "casualMessage" | undefined,
   };
 
   const validatedFields = SaveInteractionSchema.safeParse(rawFormData);
@@ -85,7 +96,6 @@ export async function saveInteractionAction(prevState: any, formData: FormData) 
   try {
     // Placeholder for Firestore saving logic
     console.log("Saving interaction:", validatedFields.data);
-    // Simulate successful save
     // To implement actual Firestore saving:
     // 1. Setup Firebase Admin SDK or Firebase client SDK for server-side operations.
     // 2. Initialize Firebase app.
@@ -93,10 +103,10 @@ export async function saveInteractionAction(prevState: any, formData: FormData) 
     // Example (conceptual):
     // import { db } from '@/lib/firebase'; // Assuming db is exported from firebase.ts
     // await db.collection('userInteractions').add({
-    //   receivedEmail: data.receivedEmail,
-    //   reply: data.reply,
+    //   primaryInput: data.receivedEmail, // or a more generic field name
+    //   response: data.reply,
+    //   mode: data.selectedMode, // if saving mode
     //   timestamp: new Date(),
-    //   // userId: ... // If user authentication is implemented
     // });
     return { success: true, error: null };
   } catch (error) {

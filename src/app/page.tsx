@@ -7,12 +7,14 @@ import EmailInputSection from '@/components/introbird/EmailInputSection';
 import ResponseSuggestionsSection from '@/components/introbird/ResponseSuggestionsSection';
 import ResponseEditorSection from '@/components/introbird/ResponseEditorSection';
 import { Separator } from '@/components/ui/separator';
+import type { SelectedMode } from '@/components/introbird/EmailInputSection'; // Import the type
 
 export default function IntroBirdPage() {
-  const [receivedEmail, setReceivedEmail] = useState<string>("");
+  const [receivedEmail, setReceivedEmail] = useState<string>(""); // Represents the main text input, context varies by mode
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [currentReply, setCurrentReply] = useState<string>("");
-  
+  const [selectedMode, setSelectedMode] = useState<SelectedMode>("reply"); // Default mode
+
   const handleSuggestionsGenerated = (newSuggestions: string[]) => {
     setSuggestions(newSuggestions);
     if (newSuggestions.length > 0) {
@@ -30,9 +32,11 @@ export default function IntroBirdPage() {
     <div className="min-h-screen bg-background text-foreground">
       <AppHeader />
       <main className="container mx-auto px-4 py-8 max-w-4xl space-y-12">
-        <EmailInputSection 
-          onSuggestionsGenerated={handleSuggestionsGenerated} 
-          setReceivedEmail={setReceivedEmail}
+        <EmailInputSection
+          selectedMode={selectedMode}
+          setSelectedMode={setSelectedMode}
+          onSuggestionsGenerated={handleSuggestionsGenerated}
+          setPrimaryInput={setReceivedEmail} // Renamed prop for clarity
         />
 
         {suggestions.length > 0 && (
@@ -41,17 +45,19 @@ export default function IntroBirdPage() {
             <ResponseSuggestionsSection
               suggestions={suggestions}
               onSelectSuggestion={handleSelectSuggestion}
+              selectedMode={selectedMode}
             />
           </>
         )}
-        
-        {(suggestions.length > 0 || currentReply) && ( // Show editor if there are suggestions or if a reply is being composed
+
+        {(suggestions.length > 0 || currentReply) && (
           <>
             <Separator className="my-8" />
             <div id="response-editor-section">
               <ResponseEditorSection
                 initialReply={currentReply}
-                receivedEmail={receivedEmail}
+                primaryInput={receivedEmail} // Renamed prop
+                selectedMode={selectedMode}
               />
             </div>
           </>
