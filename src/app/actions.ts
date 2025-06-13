@@ -9,7 +9,7 @@ import { z } from "zod";
 // Schema for received email input / primary content input
 const PrimaryContentSchema = z.object({
   primaryContent: z.string().min(10, "Input content must be at least 10 characters long."),
-  selectedMode: z.enum(['reply', 'jobPosting', 'casualMessage'], {
+  selectedMode: z.enum(['reply', 'jobPosting', 'casualMessage', 'applyToJob'], {
     errorMap: () => ({ message: "Invalid mode selected." })
   }),
 });
@@ -21,15 +21,14 @@ const ReplyDraftSchema = z.object({
 
 // Schema for saving interaction
 const SaveInteractionSchema = z.object({
-  receivedEmail: z.string().min(10), // This might need to be more generic if saving non-email interactions
+  receivedEmail: z.string().min(10), 
   reply: z.string().min(5),
-  // selectedMode: z.enum(['reply', 'jobPosting', 'casualMessage']).optional(), // If you want to save the mode
 });
 
 export async function generateRepliesAction(prevState: any, formData: FormData) {
   const rawFormData = {
     primaryContent: formData.get("primaryContent") as string,
-    selectedMode: formData.get("selectedMode") as "reply" | "jobPosting" | "casualMessage",
+    selectedMode: formData.get("selectedMode") as "reply" | "jobPosting" | "casualMessage" | "applyToJob",
   };
 
   const validatedFields = PrimaryContentSchema.safeParse(rawFormData);
@@ -42,9 +41,8 @@ export async function generateRepliesAction(prevState: any, formData: FormData) 
   }
 
   try {
-    // Map primaryContent to emailContent for the AI flow for now
     const result = await generateReplySuggestions({ 
-      emailContent: validatedFields.data.primaryContent, // Flow expects emailContent
+      emailContent: validatedFields.data.primaryContent, 
       selectedMode: validatedFields.data.selectedMode 
     });
     return { suggestions: result.suggestions, error: null };
@@ -70,7 +68,6 @@ export async function improveDraftAction(prevState: any, formData: FormData) {
   }
 
   try {
-    // Note: improveReplyDraft might also need to be mode-aware in the future
     const result = await improveReplyDraft({ draft: validatedFields.data.draft });
     return { refinedDraft: result.refinedDraft, error: null };
   } catch (error) {
@@ -82,9 +79,8 @@ export async function improveDraftAction(prevState: any, formData: FormData) {
 
 export async function saveInteractionAction(prevState: any, formData: FormData) {
   const rawFormData = {
-    receivedEmail: formData.get("receivedEmail") as string, // Stays as receivedEmail for now
+    receivedEmail: formData.get("receivedEmail") as string, 
     reply: formData.get("reply") as string,
-    // selectedMode: formData.get("selectedMode") as "reply" | "jobPosting" | "casualMessage" | undefined,
   };
 
   const validatedFields = SaveInteractionSchema.safeParse(rawFormData);
@@ -97,20 +93,7 @@ export async function saveInteractionAction(prevState: any, formData: FormData) 
   }
   
   try {
-    // Placeholder for Firestore saving logic
     console.log("Saving interaction:", validatedFields.data);
-    // To implement actual Firestore saving:
-    // 1. Setup Firebase Admin SDK or Firebase client SDK for server-side operations.
-    // 2. Initialize Firebase app.
-    // 3. Use Firestore API to add a document to a collection (e.g., 'userInteractions').
-    // Example (conceptual):
-    // import { db } from '@/lib/firebase'; // Assuming db is exported from firebase.ts
-    // await db.collection('userInteractions').add({
-    //   primaryInput: data.receivedEmail, // or a more generic field name
-    //   response: data.reply,
-    //   mode: data.selectedMode, // if saving mode
-    //   timestamp: new Date(),
-    // });
     return { success: true, error: null };
   } catch (error) {
     console.error("Error saving interaction:", error);
@@ -118,4 +101,3 @@ export async function saveInteractionAction(prevState: any, formData: FormData) 
     return { error: `Failed to save interaction: ${errorMessage}. Please try again.`, success: false };
   }
 }
-

@@ -7,18 +7,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { AlertTriangle, Loader2, Sparkles, MessagesSquare, Briefcase } from "lucide-react";
+import { AlertTriangle, Loader2, Sparkles, MessagesSquare, Briefcase, Send } from "lucide-react";
 import { generateRepliesAction } from '@/app/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-export type SelectedMode = "reply" | "jobPosting" | "casualMessage";
+export type SelectedMode = "reply" | "jobPosting" | "casualMessage" | "applyToJob";
 
 interface EmailInputSectionProps {
   selectedMode: SelectedMode;
   setSelectedMode: (mode: SelectedMode) => void;
   onSuggestionsGenerated: (suggestions: string[]) => void;
-  setPrimaryInput: (text: string) => void; // Renamed from setReceivedEmail for broader use
+  setPrimaryInput: (text: string) => void;
 }
 
 interface ModeConfig {
@@ -39,10 +39,17 @@ const modeConfigs: Record<SelectedMode, ModeConfig> = {
   },
   jobPosting: {
     title: "Job Posting Details",
-    description: "Provide details about the job (title, responsibilities, qualifications, company info) to draft a posting email.",
+    description: "Provide details about the job (title, responsibilities, qualifications, company info) to draft a posting email for recruiters/hirers.",
     placeholder: "Enter job title, key responsibilities, required qualifications, company overview, benefits, etc.",
-    buttonText: "Draft Job Email",
+    buttonText: "Draft Job Posting Email",
     icon: Briefcase,
+  },
+  applyToJob: {
+    title: "Apply to Job Posting",
+    description: "Paste the job posting you want to apply to. AI will help you draft an application email.",
+    placeholder: "Paste the full job posting text here...",
+    buttonText: "Draft Application Email",
+    icon: Send,
   },
   casualMessage: {
     title: "Casual Message Context",
@@ -75,9 +82,9 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
   const [state, formAction] = useActionState(generateRepliesAction, initialState);
 
   const handleFormAction = (formData: FormData) => {
-    const primaryContent = formData.get("primaryContent") as string; // Changed from emailContent
+    const primaryContent = formData.get("primaryContent") as string;
     setPrimaryInput(primaryContent);
-    formData.set("selectedMode", selectedMode); // Ensure selectedMode is in formData
+    formData.set("selectedMode", selectedMode);
     formAction(formData);
   };
 
@@ -103,15 +110,19 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
               id="modeSelection"
               value={selectedMode}
               onValueChange={(value) => setSelectedMode(value as SelectedMode)}
-              className="flex flex-col sm:flex-row gap-4 mt-2"
+              className="flex flex-col sm:flex-row flex-wrap gap-4 mt-2"
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="reply" id="mode-reply" />
                 <Label htmlFor="mode-reply">Reply to Email</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="jobPosting" id="mode-job" />
-                <Label htmlFor="mode-job">Compose Job Posting</Label>
+                <RadioGroupItem value="jobPosting" id="mode-job-posting" />
+                <Label htmlFor="mode-job-posting">Draft Job Posting</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="applyToJob" id="mode-apply-job" />
+                <Label htmlFor="mode-apply-job">Apply to Job</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="casualMessage" id="mode-casual" />
@@ -124,7 +135,7 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
             <Label htmlFor="primaryContent" className="sr-only">{currentConfig.title}</Label>
             <Textarea
               id="primaryContent"
-              name="primaryContent" // Changed from emailContent
+              name="primaryContent"
               placeholder={currentConfig.placeholder}
               rows={10}
               className="min-h-[150px] resize-y"

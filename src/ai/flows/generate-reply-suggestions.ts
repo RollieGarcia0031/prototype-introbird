@@ -2,7 +2,7 @@
 'use server';
 
 /**
- * @fileOverview AI agent for generating text based on selected mode (email reply, job posting, casual message).
+ * @fileOverview AI agent for generating text based on selected mode (email reply, job posting, casual message, apply to job).
  *
  * - generateReplySuggestions - A function that handles the generation of text suggestions.
  * - GenerateReplySuggestionsInput - The input type for the generateReplySuggestions function.
@@ -14,8 +14,8 @@ import {z} from 'genkit';
 
 // Schema for the overall flow input
 const GenerateReplySuggestionsInputSchema = z.object({
-  emailContent: z.string().describe('The content of the email to reply to, job description details, or casual message context.'),
-  selectedMode: z.enum(['reply', 'jobPosting', 'casualMessage']).describe('The selected mode for generation.'),
+  emailContent: z.string().describe('The content of the email to reply to, job description details, casual message context, or job posting to apply to.'),
+  selectedMode: z.enum(['reply', 'jobPosting', 'casualMessage', 'applyToJob']).describe('The selected mode for generation.'),
 });
 export type GenerateReplySuggestionsInput = z.infer<typeof GenerateReplySuggestionsInputSchema>;
 
@@ -23,9 +23,10 @@ export type GenerateReplySuggestionsInput = z.infer<typeof GenerateReplySuggesti
 const GenerateReplySuggestionsPromptPayloadSchema = z.object({
   emailContent: z.string().describe('The primary text content provided by the user.'),
   isReplyMode: z.boolean().describe('True if the mode is to reply to an email.'),
-  isJobPostingMode: z.boolean().describe('True if the mode is to draft a job posting.'),
+  isJobPostingMode: z.boolean().describe('True if the mode is to draft a job posting email (for recruiters).'),
+  isApplyToJobMode: z.boolean().describe('True if the mode is to draft an application email for a job posting (for applicants).'),
   isCasualMessageMode: z.boolean().describe('True if the mode is to write a casual message.'),
-  selectedMode: z.enum(['reply', 'jobPosting', 'casualMessage']).describe('The selected mode for generation.')
+  selectedMode: z.enum(['reply', 'jobPosting', 'casualMessage', 'applyToJob']).describe('The selected mode for generation.')
 });
 type GenerateReplySuggestionsPromptPayload = z.infer<typeof GenerateReplySuggestionsPromptPayloadSchema>;
 
@@ -33,7 +34,7 @@ type GenerateReplySuggestionsPromptPayload = z.infer<typeof GenerateReplySuggest
 const GenerateReplySuggestionsOutputSchema = z.object({
   suggestions: z
     .array(z.string())
-    .describe('An array of suggested replies, a job posting draft, or casual message options, tailored to the input and mode.'),
+    .describe('An array of suggested replies, a job posting draft, an application email draft, or casual message options, tailored to the input and mode.'),
 });
 export type GenerateReplySuggestionsOutput = z.infer<typeof GenerateReplySuggestionsOutputSchema>;
 
@@ -57,7 +58,7 @@ Email Content: {{{emailContent}}}
 
 Reply Suggestions:
 {{else if isJobPostingMode}}
-You are an AI assistant specialized in crafting compelling job posting emails.
+You are an AI assistant specialized in crafting compelling job posting emails for recruiters or hiring managers.
 Based on the provided job description details, generate a complete draft for a job posting email.
 The email should be professional, engaging, and clearly outline the role, responsibilities, qualifications, and company culture (if provided).
 Include a clear call to action for interested candidates. If details are sparse, create a plausible and comprehensive job posting.
@@ -65,6 +66,17 @@ Include a clear call to action for interested candidates. If details are sparse,
 Job Description Details: {{{emailContent}}}
 
 Job Posting Email Draft (provide as a single suggestion in the array):
+{{else if isApplyToJobMode}}
+You are an AI assistant specialized in helping users draft compelling application emails for job postings.
+The user will provide a job posting. Your task is to generate a professional and tailored application email based on this job posting.
+The email should highlight how a candidate might present themselves as suitable for the role, focusing on common desirable traits and skills if specific user details are not available.
+Ensure the tone is enthusiastic and professional. Include placeholders like "[Your Name]", "[Your Address/Phone/Email]", "[Hiring Manager Name, if known, otherwise 'Hiring Team']", "[Company Name]", and "[Job Title mentioned in Posting]".
+Suggest a strong opening (expressing interest in the specific role) and a closing (e.g., expressing eagerness to discuss qualifications further).
+The goal is to create a strong template that the user can then personalize.
+
+Job Posting Content (provided by user): {{{emailContent}}}
+
+Application Email Draft (provide as a single suggestion in the array):
 {{else if isCasualMessageMode}}
 You are an AI assistant skilled at writing casual and semi-formal messages for platforms like Telegram or Messenger.
 Based on the user's input about the message context, generate three distinct message options.
@@ -113,16 +125,15 @@ const generateReplySuggestionsFlow = ai.defineFlow(
       selectedMode: flowInput.selectedMode,
       isReplyMode: flowInput.selectedMode === 'reply',
       isJobPostingMode: flowInput.selectedMode === 'jobPosting',
+      isApplyToJobMode: flowInput.selectedMode === 'applyToJob',
       isCasualMessageMode: flowInput.selectedMode === 'casualMessage',
     };
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
         const {output} = await prompt(promptPayload);
-        // For job posting, if the AI provides one long string, ensure it's still in an array.
-        // The schema expects an array of strings.
-        if (flowInput.selectedMode === 'jobPosting' && output && output.suggestions.length > 0 && typeof output.suggestions[0] === 'string') {
-            // The prompt now explicitly asks for it to be a single suggestion in the array.
+        if ((flowInput.selectedMode === 'jobPosting' || flowInput.selectedMode === 'applyToJob') && output && output.suggestions.length > 0 && typeof output.suggestions[0] === 'string') {
+            // The prompt now explicitly asks for it to be a single suggestion in the array for these modes.
         }
         return output!; // Success
       } catch (error) {
@@ -136,7 +147,6 @@ const generateReplySuggestionsFlow = ai.defineFlow(
         }
       }
     }
-    // This line should ideally not be reached if MAX_RETRIES > 0, but acts as a fallback.
     throw new Error('Failed to generate reply suggestions after multiple retries.');
   }
 );

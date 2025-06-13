@@ -11,11 +11,11 @@ import { AlertTriangle, BrainCircuit, Disc, Loader2 } from "lucide-react";
 import { improveDraftAction, saveInteractionAction } from '@/app/actions';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import type { SelectedMode } from './EmailInputSection'; // Import the type
+import type { SelectedMode } from './EmailInputSection';
 
 interface ResponseEditorSectionProps {
   initialReply: string;
-  primaryInput: string; // Renamed from receivedEmail
+  primaryInput: string;
   selectedMode: SelectedMode;
 }
 
@@ -92,18 +92,24 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, p
   };
 
   const handleSaveSubmit = (formData: FormData) => {
-    formData.set('receivedEmail', primaryInput); // Keep as receivedEmail for backend compatibility for now
+    formData.set('receivedEmail', primaryInput); 
     formData.set('reply', currentReply);
-    // Potentially add selectedMode to save action if backend needs it
     saveFormAction(formData);
   };
   
-  const cardTitle = selectedMode === 'jobPosting' ? "Edit Job Posting Draft" : (selectedMode === 'casualMessage' ? "Edit Casual Message" : "Compose Your Reply");
-  const cardDescription = selectedMode === 'jobPosting' 
-    ? "Refine the AI-drafted job posting or write your own. You can ask AI to improve it."
-    : (selectedMode === 'casualMessage' 
-        ? "Adjust the AI-generated message or write your own. Use AI to enhance it."
-        : "Edit the AI-generated reply or write your own. You can also ask AI to improve it.");
+  let cardTitle = "Compose Your Reply";
+  let cardDescription = "Edit the AI-generated reply or write your own. You can also ask AI to improve it.";
+
+  if (selectedMode === 'jobPosting') {
+    cardTitle = "Edit Job Posting Draft";
+    cardDescription = "Refine the AI-drafted job posting or write your own. You can ask AI to improve it.";
+  } else if (selectedMode === 'casualMessage') {
+    cardTitle = "Edit Casual Message";
+    cardDescription = "Adjust the AI-generated message or write your own. Use AI to enhance it.";
+  } else if (selectedMode === 'applyToJob') {
+    cardTitle = "Edit Application Email";
+    cardDescription = "Refine your AI-drafted application email or write your own. You can ask AI to improve it.";
+  }
 
 
   return (
