@@ -170,6 +170,19 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
             </RadioGroup>
           </div>
 
+          <div>
+            <Label htmlFor="primaryContent" className="sr-only">{currentConfig.title}</Label>
+            <Textarea
+              id="primaryContent"
+              name="primaryContent"
+              placeholder={currentConfig.placeholder}
+              rows={10}
+              className="min-h-[150px] resize-y"
+              required
+            />
+            <input type="hidden" name="selectedMode" value={selectedMode} />
+          </div>
+
           {currentConfig.hasToneAndLimitOptions && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -201,18 +214,6 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
             </div>
           )}
 
-          <div>
-            <Label htmlFor="primaryContent" className="sr-only">{currentConfig.title}</Label>
-            <Textarea
-              id="primaryContent"
-              name="primaryContent"
-              placeholder={currentConfig.placeholder}
-              rows={10}
-              className="min-h-[150px] resize-y"
-              required
-            />
-            <input type="hidden" name="selectedMode" value={selectedMode} />
-          </div>
           {state?.error && (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
