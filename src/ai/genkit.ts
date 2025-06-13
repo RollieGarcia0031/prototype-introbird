@@ -2,11 +2,12 @@
 import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
 // import {openAI} from '@genkit-ai/openai'; // Commented out due to install issues
+import { openAI } from 'genkitx-openai';
 
 export const ai = genkit({
   plugins: [
     googleAI(),
-    // openAI(), // Commented out due to install issues
+    openAI(), // Commented out due to install issues
   ],
   model: 'googleai/gemini-2.0-flash', // Default model
 });

@@ -201,8 +201,8 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={AVAILABLE_MODELS.GEMINI_FLASH}>Gemini Flash (Default)</SelectItem>
-                  {/* <SelectItem value={AVAILABLE_MODELS.OPENAI_GPT_4O_MINI}>OpenAI GPT-4o Mini</SelectItem> */}
-                  {/* <SelectItem value={AVAILABLE_MODELS.OPENAI_GPT_3_5_TURBO}>OpenAI GPT-3.5 Turbo</SelectItem> */}
+                  <SelectItem value={AVAILABLE_MODELS.OPENAI_GPT_4O_MINI}>OpenAI GPT-4o Mini</SelectItem>
+                  <SelectItem value={AVAILABLE_MODELS.OPENAI_GPT_3_5_TURBO}>OpenAI GPT-3.5 Turbo</SelectItem>
                 </SelectContent>
               </Select>
             </div>
