@@ -3,17 +3,22 @@ import { initializeApp, getApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// IMPORTANT:
-// For production or any real deployment, these credentials should be moved to
-// environment variables (e.g., .env.local) prefixed with NEXT_PUBLIC_
-// Example: NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+// Ensure your .env.local file has these variables defined.
+// Example .env.local:
+// NEXT_PUBLIC_FIREBASE_API_KEY="your_api_key"
+// NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="your_auth_domain"
+// NEXT_PUBLIC_FIREBASE_PROJECT_ID="your_project_id"
+// NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="your_storage_bucket"
+// NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="your_messaging_sender_id"
+// NEXT_PUBLIC_FIREBASE_APP_ID="your_app_id"
+
 const firebaseConfig = {
-  apiKey: "AIzaSyDlo69Mwe9GplwNQZoWjo12WhBYs8LAxXQ",
-  authDomain: "charot-af5c5.firebaseapp.com",
-  projectId: "charot-af5c5",
-  storageBucket: "charot-af5c5.firebasestorage.app",
-  messagingSenderId: "791506204744",
-  appId: "1:791506204744:web:f97747ff1d9d1dac46407d"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
 // Initialize Firebase
@@ -31,7 +36,7 @@ if (!admin.apps.length) {
   try {
     admin.initializeApp({
       credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
+        projectId: process.env.FIREBASE_PROJECT_ID, // Note: Server-side env vars don't need NEXT_PUBLIC_
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
         privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
       }),
