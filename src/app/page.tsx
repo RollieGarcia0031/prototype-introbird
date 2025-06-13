@@ -9,7 +9,7 @@ import ResponseSuggestionsSection from '@/components/introbird/ResponseSuggestio
 import ResponseEditorSection from '@/components/introbird/ResponseEditorSection';
 import { Separator } from '@/components/ui/separator';
 import type { SelectedMode } from '@/components/introbird/EmailInputSection'; // Import the type
-import { AVAILABLE_MODELS } from '@/ai/model-definitions'; // Updated import
+import { AVAILABLE_MODELS } from '@/ai/model-definitions'; 
 
 export default function IntroBirdPage() {
   const [receivedEmail, setReceivedEmail] = useState<string>(""); // Represents the main text input, context varies by mode
@@ -71,7 +71,7 @@ export default function IntroBirdPage() {
       </main>
       <footer className="py-8 text-center text-muted-foreground text-sm">
         <p>&copy; {new Date().getFullYear()} IntroBird. All rights reserved.</p>
-        
+        {/* Removed OpenAI API key specific note as the package is currently unavailable */}
       </footer>
     </div>
   );
