@@ -1,30 +1,27 @@
 // src/lib/firebase.ts
-
-// This file is a placeholder for your Firebase configuration.
-// To use Firebase services like Firestore, you need to initialize Firebase.
-
-// For client-side Firebase (e.g., if you were to implement client-side data saving or auth):
-/*
 import { initializeApp, getApp, getApps } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-// import { getAuth } from 'firebase/auth';
 
+// IMPORTANT:
+// For production or any real deployment, these credentials should be moved to
+// environment variables (e.g., .env.local) prefixed with NEXT_PUBLIC_
+// Example: NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: "AIzaSyDlo69Mwe9GplwNQZoWjo12WhBYs8LAxXQ",
+  authDomain: "charot-af5c5.firebaseapp.com",
+  projectId: "charot-af5c5",
+  storageBucket: "charot-af5c5.firebasestorage.app",
+  messagingSenderId: "791506204744",
+  appId: "1:791506204744:web:f97747ff1d9d1dac46407d"
 };
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app);
-// const auth = getAuth(app);
+const auth = getAuth(app);
+const db = getFirestore(app); // Firestore instance, can be used later for saving user data
 
-export { app, db, auth };
-*/
+export { app, auth, db };
 
 // For server-side Firebase (e.g., using Firebase Admin SDK in server actions or API routes):
 /*
@@ -50,11 +47,3 @@ const adminDb = admin.firestore();
 
 export { adminDb, adminAuth };
 */
-
-// Note: Ensure you have the necessary environment variables set up.
-// For client-side, prefix with NEXT_PUBLIC_.
-// For server-side, they are typically available in the server environment.
-
-// For this IntroBird application, saving will be handled via Server Actions.
-// The actual Firestore setup within those server actions would typically use the Firebase Admin SDK.
-// The placeholder `saveInteractionAction` in `src/app/actions.ts` demonstrates where this logic would go.

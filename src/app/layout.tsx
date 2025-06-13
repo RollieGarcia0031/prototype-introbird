@@ -1,7 +1,6 @@
+// src/app/layout.tsx
+"use client";
 
-"use client"; // Add "use client" because we're introducing useState
-
-import type { Metadata } from 'next'; // Keep as type import
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import {
@@ -13,34 +12,69 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarInset,
-  SidebarTrigger, // Import SidebarTrigger
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import AppHeader from '@/components/introbird/AppHeader';
-import { Settings, Palette as CustomizationIcon } from "lucide-react";
-import React, { useState } from 'react'; // Import useState
+import { Settings, Palette as CustomizationIcon, Loader2 } from "lucide-react";
+import React from 'react'; // Removed useState as it's handled by AuthContext
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 
-// Metadata can still be defined in client components, but Next.js recommends it at the page/layout level for server components.
-// For simplicity in this prototype phase, we'll keep it here.
-// export const metadata: Metadata = { // This might cause issues with "use client", Next.js prefers metadata in Server Components
-//   title: 'IntroBird - AI Email Assistant',
-//   description: 'Generate email replies with AI',
-// };
+// RootLayoutContent is the part of your layout that needs access to the AuthContext
+const RootLayoutContent = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth(); // Get user and loading state from AuthContext
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <SidebarProvider defaultOpen={false}>
+      <Sidebar collapsible="icon">
+        <SidebarHeader className="p-2 flex items-center justify-center border-b">
+          <SidebarTrigger />
+        </SidebarHeader>
+        <SidebarContent className="p-2">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton tooltip="Settings">
+                <Settings />
+                <span className="group-data-[state=collapsed]:hidden">Settings</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                tooltip={!user ? "Login to customize" : "Customization"} 
+                disabled={!user} // Disable if user is null (not logged in)
+              >
+                <CustomizationIcon />
+                <span className="group-data-[state=collapsed]:hidden">Customization</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarContent>
+      </Sidebar>
+      <div className="flex flex-col min-h-screen flex-1">
+        <AppHeader /> 
+        <SidebarInset className="flex-1">
+          {children}
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
+  );
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Mock login state, default to false
-
-  // A simple function to toggle login state for demonstration purposes.
-  // This would be replaced by actual authentication logic.
-  const toggleLogin = () => setIsLoggedIn(!isLoggedIn);
-
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Title and meta description are good candidates to move to a Server Component or page.tsx if "use client" here is an issue */}
         <title>IntroBird - AI Email Assistant</title>
         <meta name="description" content="Generate email replies with AI" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -49,40 +83,11 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <SidebarProvider defaultOpen={false}>
-          <Sidebar collapsible="icon">
-            <SidebarHeader className="p-2 flex items-center justify-center border-b">
-               {/* Replaced custom SVG/text with SidebarTrigger */}
-               <SidebarTrigger />
-            </SidebarHeader>
-            <SidebarContent className="p-2">
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton tooltip="Settings">
-                    <Settings />
-                    <span className="group-data-[state=collapsed]:hidden">Settings</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton tooltip={!isLoggedIn ? "Login to customize" : "Customization"} disabled={!isLoggedIn}>
-                    <CustomizationIcon />
-                    <span className="group-data-[state=collapsed]:hidden">Customization</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarContent>
-          </Sidebar>
-          <div className="flex flex-col min-h-screen flex-1">
-            {/* Pass toggleLogin and isLoggedIn to AppHeader if you want the login button there to affect this state */}
-            <AppHeader isLoggedIn={isLoggedIn} onLoginToggle={toggleLogin} />
-            <SidebarInset className="flex-1">
-              {children}
-            </SidebarInset>
-          </div>
-        </SidebarProvider>
+        <AuthProvider> {/* Wrap with AuthProvider */}
+          <RootLayoutContent>{children}</RootLayoutContent>
+        </AuthProvider>
         <Toaster />
       </body>
     </html>
   );
 }
-
