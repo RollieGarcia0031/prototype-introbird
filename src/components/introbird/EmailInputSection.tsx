@@ -45,7 +45,7 @@ const modeConfigs: Record<SelectedMode, ModeConfig> = {
   },
   jobPosting: {
     title: "Job Posting Details",
-    description: "Provide details about the job to draft a posting email. You can specify tone and character limit.",
+    description: "Provide details about the job to draft a posting email. You can specify tone and character limit below the main input.",
     placeholder: "Enter job title, key responsibilities, required qualifications, company overview, benefits, etc.",
     buttonText: "Draft Job Posting Email",
     icon: Briefcase,
@@ -61,7 +61,7 @@ const modeConfigs: Record<SelectedMode, ModeConfig> = {
   },
   casualMessage: {
     title: "Casual Message Context",
-    description: "Describe the situation for your message. You can specify tone and character limit.",
+    description: "Describe the situation for your message. You can specify tone and character limit below the main input.",
     placeholder: "E.g., 'Want to ask a friend to hang out this weekend', 'Need to congratulate a colleague on their promotion'",
     buttonText: "Generate Messages",
     icon: MessagesSquare,
@@ -182,7 +182,7 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
             />
             <input type="hidden" name="selectedMode" value={selectedMode} />
           </div>
-
+          
           {currentConfig.hasToneAndLimitOptions && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
