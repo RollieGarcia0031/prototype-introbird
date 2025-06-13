@@ -89,15 +89,17 @@ Job Posting Content (provided by user): {{{emailContent}}}
 
 Application Email Draft (provide as a single suggestion in the array, including subject, greeting, body, and closing):
 {{else if isCasualMessageMode}}
-You are an AI assistant skilled at writing casual and semi-formal messages for platforms like Telegram or Messenger.
-Based on the user's input about the message context, generate three distinct message options.
-The messages should be friendly, concise, and appropriate for the described situation. Vary the tone slightly for each option.
+You are an AI assistant skilled at drafting casual networking messages or inquiries for job applicants.
+The user is an applicant and will provide a job description.
+Based on this job description, generate three distinct casual message options that an applicant could use to reach out to someone at the company, inquire about the role, or express interest.
+The messages should be friendly, concise, and suitable for platforms like LinkedIn or a less formal email. Vary the approach for each option.
+Include placeholders like "[Their Name]", "[Company Name]", "[Job Title]" where appropriate.
 {{#if tone}}Please adopt the following tone characteristics: {{{tone}}}.{{/if}}
 {{#if charLimit}}Please try to keep each message option to approximately {{{charLimit}}} characters.{{/if}}
 
-Message Context: {{{emailContent}}}
+Job Description (provided by user): {{{emailContent}}}
 
-Message Options:
+Casual Inquiry/Networking Message Options:
 {{else if isRewriteMessageMode}}
 You are an AI assistant skilled at rewriting and rephrasing text.
 The user will provide a piece of text. Your task is to rewrite it. You can aim to improve clarity, adjust the tone, make it more concise, or enhance its overall style.

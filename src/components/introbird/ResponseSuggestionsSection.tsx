@@ -1,8 +1,9 @@
+
 // src/components/introbird/ResponseSuggestionsSection.tsx
 import type { FC } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Copy, Edit3, MessageSquare, Send, RefreshCw } from "lucide-react"; 
+import { Copy, Edit3, MessageSquare, Send, RefreshCw, Search } from "lucide-react"; 
 import type { SelectedMode } from './EmailInputSection';
 
 interface ResponseSuggestionsSectionProps {
@@ -20,7 +21,7 @@ const getButtonTextAndIcon = (mode: SelectedMode) => {
     case 'applyToJob':
       return { text: "Use this Application Draft", Icon: Edit3 }; 
     case 'casualMessage':
-      return { text: "Use this Message", Icon: MessageSquare };
+      return { text: "Use this Inquiry", Icon: Search }; // Updated for casual job inquiry
     case 'rewriteMessage':
       return { text: "Use this Rewritten Text", Icon: RefreshCw };
     default:
@@ -44,6 +45,9 @@ const ResponseSuggestionsSection: FC<ResponseSuggestionsSectionProps> = ({ sugge
     } else if (selectedMode === 'rewriteMessage') {
       titleText = "AI Rewritten Text";
     }
+    // For casualMessage, even if it's one suggestion in future, "AI Suggestions" is fine
+  } else if (selectedMode === 'casualMessage') {
+    titleText = "AI Drafted Casual Inquiries";
   }
 
 
@@ -58,7 +62,8 @@ const ResponseSuggestionsSection: FC<ResponseSuggestionsSectionProps> = ({ sugge
                 {suggestions.length > 1 ? `Suggestion ${index + 1}` : 
                   (selectedMode === 'jobPosting' ? 'Job Posting Draft' : 
                   (selectedMode === 'applyToJob' ? 'Application Email Draft' : 
-                  (selectedMode === 'rewriteMessage' ? 'Rewritten Text' : 'Suggestion')))}
+                  (selectedMode === 'rewriteMessage' ? 'Rewritten Text' : 
+                  (selectedMode === 'casualMessage' ? 'Casual Inquiry Option' : 'Suggestion'))))}
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-grow">
@@ -84,3 +89,4 @@ const ResponseSuggestionsSection: FC<ResponseSuggestionsSectionProps> = ({ sugge
 };
 
 export default ResponseSuggestionsSection;
+

@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AlertTriangle, Loader2, Sparkles, MessagesSquare, Briefcase, Send, RefreshCw } from "lucide-react";
+import { AlertTriangle, Loader2, Sparkles, MessagesSquare, Briefcase, Send, RefreshCw, Search } from "lucide-react"; // Added Search for Casual Inquiry
 import { generateRepliesAction } from '@/app/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -42,7 +42,7 @@ const modeConfigs: Record<SelectedMode, ModeConfig> = {
     placeholder: "Paste the full email content here...",
     buttonText: "Generate Replies",
     icon: Sparkles,
-    hasToneAndLimitOptions: true, // Now true for all modes
+    hasToneAndLimitOptions: true,
   },
   jobPosting: {
     title: "Job Posting Details",
@@ -58,14 +58,14 @@ const modeConfigs: Record<SelectedMode, ModeConfig> = {
     placeholder: "Paste the full job posting text here...",
     buttonText: "Draft Application Email",
     icon: Send,
-    hasToneAndLimitOptions: true, // Now true for all modes
+    hasToneAndLimitOptions: true,
   },
   casualMessage: {
-    title: "Casual Message Context",
-    description: "Describe the situation. Use advanced options for tone and length.",
-    placeholder: "E.g., 'Want to ask a friend to hang out this weekend', 'Need to congratulate a colleague on their promotion'",
-    buttonText: "Generate Messages",
-    icon: MessagesSquare,
+    title: "Casual Job Inquiry",
+    description: "You are an applicant. Paste a job description to draft a casual networking message or inquiry.",
+    placeholder: "Paste the full job description here to draft a casual inquiry or networking message...",
+    buttonText: "Draft Casual Inquiry",
+    icon: Search, // Changed icon
     hasToneAndLimitOptions: true,
   },
   rewriteMessage: {
@@ -74,7 +74,7 @@ const modeConfigs: Record<SelectedMode, ModeConfig> = {
     placeholder: "Paste the text you want to rewrite here...",
     buttonText: "Rewrite Text",
     icon: RefreshCw,
-    hasToneAndLimitOptions: true, // Now true for all modes
+    hasToneAndLimitOptions: true,
   }
 };
 
@@ -122,12 +122,11 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
   const handleFormAction = (formData: FormData) => {
     const primaryContent = formData.get("primaryContent") as string;
     setPrimaryInput(primaryContent);
-    formData.set("selectedMode", selectedMode); // Ensure selectedMode is part of formData
+    formData.set("selectedMode", selectedMode);
     
     if (selectedTones.length > 0) {
       formData.set("tone", selectedTones.join(", "));
     }
-    // charLimit is directly picked up by name="charLimit" on the Input
     
     formAction(formData);
   };
@@ -155,7 +154,7 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
               value={selectedMode}
               onValueChange={(value) => {
                 setSelectedMode(value as SelectedMode);
-                setSelectedTones([]); // Reset tones when mode changes
+                setSelectedTones([]); 
               }}
               className="flex flex-col sm:flex-row flex-wrap gap-4 mt-2"
             >
@@ -173,7 +172,7 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="casualMessage" id="mode-casual" />
-                <Label htmlFor="mode-casual">Casual Message</Label>
+                <Label htmlFor="mode-casual">Casual Job Inquiry</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="rewriteMessage" id="mode-rewrite" />
@@ -192,12 +191,11 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
               className="min-h-[150px] resize-y"
               required
             />
-            {/* Hidden input to ensure selectedMode is always part of the form data for the action */}
             <input type="hidden" name="selectedMode" value={selectedMode} />
           </div>
           
-          {currentConfig.hasToneAndLimitOptions && ( // This condition will always be true now
-            <Accordion type="single" collapsible className="w-full"> {/* Removed defaultValue to make it collapsed by default */}
+          {currentConfig.hasToneAndLimitOptions && (
+             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="advanced-options">
                 <AccordionTrigger className="text-sm font-medium hover:no-underline">
                   Advanced Tone & Length Options

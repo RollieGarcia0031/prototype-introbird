@@ -1,3 +1,4 @@
+
 // src/components/introbird/ResponseEditorSection.tsx
 "use client";
 
@@ -82,7 +83,7 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, s
   useEffect(() => {
     if (refineWithInstructionState?.refinedDraft) {
       setCurrentReply(refineWithInstructionState.refinedDraft);
-      setEditInstruction(""); // Clear instruction input
+      setEditInstruction(""); 
       toast({ title: "Draft Refined", description: "AI has refined your response based on your instruction." });
     }
     if (refineWithInstructionState?.error) {
@@ -122,9 +123,9 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, s
       instructionPlaceholder = "e.g., 'Make it more engaging', 'Add a section on company culture'";
       break;
     case 'casualMessage':
-      cardTitle = "Edit Casual Message";
-      cardDescription = "Adjust the AI-generated message. Use AI to enhance it or provide specific editing instructions.";
-      instructionPlaceholder = "e.g., 'Make it funnier', 'Add an emoji'";
+      cardTitle = "Edit Casual Inquiry";
+      cardDescription = "Refine your AI-drafted casual inquiry or networking message. Use AI to enhance it or provide specific editing instructions.";
+      instructionPlaceholder = "e.g., 'Make it sound more like an internal referral', 'Add a question about team culture'";
       break;
     case 'applyToJob':
       cardTitle = "Edit Application Email";
@@ -223,3 +224,4 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, s
 };
 
 export default ResponseEditorSection;
+
