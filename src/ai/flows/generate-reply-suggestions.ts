@@ -25,8 +25,6 @@ const GenerateReplySuggestionsPromptPayloadSchema = z.object({
   isReplyMode: z.boolean().describe('True if the mode is to reply to an email.'),
   isJobPostingMode: z.boolean().describe('True if the mode is to draft a job posting.'),
   isCasualMessageMode: z.boolean().describe('True if the mode is to write a casual message.'),
-  // We can still pass selectedMode if the prompt text needs the raw value for some reason,
-  // but the primary conditional logic will use the booleans.
   selectedMode: z.enum(['reply', 'jobPosting', 'casualMessage']).describe('The selected mode for generation.')
 });
 type GenerateReplySuggestionsPromptPayload = z.infer<typeof GenerateReplySuggestionsPromptPayloadSchema>;
@@ -47,7 +45,7 @@ export async function generateReplySuggestions(
 
 const prompt = ai.definePrompt({
   name: 'generateReplySuggestionsPrompt',
-  input: {schema: GenerateReplySuggestionsPromptPayloadSchema}, // Use the new payload schema
+  input: {schema: GenerateReplySuggestionsPromptPayloadSchema},
   output: {schema: GenerateReplySuggestionsOutputSchema},
   prompt: `{{#if isReplyMode}}
 You are an AI assistant specialized in generating email reply suggestions.
@@ -100,14 +98,16 @@ You are a helpful AI assistant. Please process the following input: {{{emailCont
   }
 });
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 2000; // 2 seconds
+
 const generateReplySuggestionsFlow = ai.defineFlow(
   {
     name: 'generateReplySuggestionsFlow',
-    inputSchema: GenerateReplySuggestionsInputSchema, // Flow input remains the original schema
+    inputSchema: GenerateReplySuggestionsInputSchema,
     outputSchema: GenerateReplySuggestionsOutputSchema,
   },
   async (flowInput: GenerateReplySuggestionsInput): Promise<GenerateReplySuggestionsOutput> => {
-    // Transform the flow input to the prompt's expected payload
     const promptPayload: GenerateReplySuggestionsPromptPayload = {
       emailContent: flowInput.emailContent,
       selectedMode: flowInput.selectedMode,
@@ -116,16 +116,27 @@ const generateReplySuggestionsFlow = ai.defineFlow(
       isCasualMessageMode: flowInput.selectedMode === 'casualMessage',
     };
 
-    const {output} = await prompt(promptPayload);
-
-    // For job posting, if the AI provides one long string, ensure it's still in an array.
-    // The schema expects an array of strings.
-    if (flowInput.selectedMode === 'jobPosting' && output && output.suggestions.length > 0 && typeof output.suggestions[0] === 'string') {
-        // If it's already an array (e.g. AI followed "provide as a single suggestion in the array"), this is fine.
-        // If it's a single string that's not in an array yet, this is handled by Zod parsing.
-        // The prompt now explicitly asks for it to be a single suggestion in the array.
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const {output} = await prompt(promptPayload);
+        // For job posting, if the AI provides one long string, ensure it's still in an array.
+        // The schema expects an array of strings.
+        if (flowInput.selectedMode === 'jobPosting' && output && output.suggestions.length > 0 && typeof output.suggestions[0] === 'string') {
+            // The prompt now explicitly asks for it to be a single suggestion in the array.
+        }
+        return output!; // Success
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if ((errorMessage.includes('503') || errorMessage.toLowerCase().includes('overload') || errorMessage.toLowerCase().includes('service unavailable')) && attempt < MAX_RETRIES) {
+          console.warn(`Attempt ${attempt} failed for generateReplySuggestionsFlow: ${errorMessage}. Retrying in ${RETRY_DELAY_MS / 1000}s...`);
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+        } else {
+          console.error(`Final attempt (${attempt}) failed for generateReplySuggestionsFlow or non-retryable error: ${errorMessage}`);
+          throw error;
+        }
+      }
     }
-    return output!;
+    // This line should ideally not be reached if MAX_RETRIES > 0, but acts as a fallback.
+    throw new Error('Failed to generate reply suggestions after multiple retries.');
   }
 );
-
