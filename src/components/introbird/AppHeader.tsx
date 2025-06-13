@@ -1,15 +1,31 @@
 // src/components/introbird/AppHeader.tsx
+"use client";
+
 import type { FC } from 'react';
+import { Button } from "@/components/ui/button";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { LogIn } from "lucide-react";
 
 interface AppHeaderProps {}
 
 const AppHeader: FC<AppHeaderProps> = () => {
   return (
-    <header className="py-8 text-center">
-      <h1 className="font-headline text-4xl sm:text-5xl font-bold text-primary">IntroBird</h1>
-      <p className="mt-2 text-base sm:text-lg text-muted-foreground">
-        AI-powered email replies, simplified.
-      </p>
+    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+        <div className="flex items-center gap-2">
+          <SidebarTrigger className="h-8 w-8" />
+          <div>
+            <h1 className="font-headline text-3xl font-bold text-primary">IntroBird</h1>
+            <p className="text-sm text-muted-foreground hidden sm:block">
+              AI-powered email replies, simplified.
+            </p>
+          </div>
+        </div>
+        <Button variant="outline">
+          <LogIn className="mr-2 h-4 w-4" />
+          Login
+        </Button>
+      </div>
     </header>
   );
 };
