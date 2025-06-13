@@ -122,7 +122,7 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
   const handleFormAction = (formData: FormData) => {
     const primaryContent = formData.get("primaryContent") as string;
     setPrimaryInput(primaryContent);
-    formData.set("selectedMode", selectedMode);
+    formData.set("selectedMode", selectedMode); // Ensure selectedMode is part of formData
     if (modeConfigs[selectedMode].hasToneAndLimitOptions) {
       if (selectedTones.length > 0) {
         formData.set("tone", selectedTones.join(", "));
@@ -192,11 +192,12 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
               className="min-h-[150px] resize-y"
               required
             />
+            {/* Hidden input to ensure selectedMode is always part of the form data for the action */}
             <input type="hidden" name="selectedMode" value={selectedMode} />
           </div>
           
           {currentConfig.hasToneAndLimitOptions && (
-            <Accordion type="single" collapsible className="w-full">
+            <Accordion type="single" collapsible className="w-full" defaultValue="advanced-options">
               <AccordionItem value="advanced-options">
                 <AccordionTrigger className="text-sm font-medium hover:no-underline">
                   Advanced Tone & Length Options
@@ -252,4 +253,6 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
 };
 
 export default EmailInputSection;
+    
+
     
