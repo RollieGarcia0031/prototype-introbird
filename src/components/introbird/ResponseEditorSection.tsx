@@ -7,11 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { AlertTriangle, BrainCircuit, Disc, Loader2 } from "lucide-react";
-import { improveDraftAction, saveInteractionAction } from '@/app/actions';
+import { AlertTriangle, BrainCircuit, Disc, Loader2, Edit } from "lucide-react";
+import { improveDraftAction, saveInteractionAction, refineWithInstructionAction } from '@/app/actions';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { SelectedMode } from './EmailInputSection';
+import { Separator } from '../ui/separator';
 
 interface ResponseEditorSectionProps {
   initialReply: string;
@@ -36,6 +37,23 @@ function ImproveButton() {
   );
 }
 
+function RefineWithInstructionButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button
+      type="submit"
+      variant="outline"
+      className="w-full"
+      disabled={pending}
+      aria-label="Refine with My Instruction"
+      suppressHydrationWarning={true}
+    >
+      {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Edit className="mr-2 h-4 w-4" />}
+      Refine with My Instruction
+    </Button>
+  );
+}
+
 function SaveButton() {
   const { pending } = useFormStatus();
   return (
@@ -55,11 +73,15 @@ function SaveButton() {
 
 const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, primaryInput, selectedMode }) => {
   const [currentReply, setCurrentReply] = useState(initialReply);
+  const [editInstruction, setEditInstruction] = useState("");
   const { toast } = useToast();
 
   const improveInitialState = { refinedDraft: null, error: null };
   const [improveState, improveFormAction] = useActionState(improveDraftAction, improveInitialState);
   
+  const refineWithInstructionInitialState = { refinedDraft: null, error: null };
+  const [refineWithInstructionState, refineWithInstructionFormAction] = useActionState(refineWithInstructionAction, refineWithInstructionInitialState);
+
   const saveInitialState = { success: false, error: null };
   const [saveState, saveFormAction] = useActionState(saveInteractionAction, saveInitialState);
 
@@ -76,6 +98,17 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, p
       toast({ variant: "destructive", title: "Error Improving", description: improveState.error });
     }
   }, [improveState, toast]);
+  
+  useEffect(() => {
+    if (refineWithInstructionState?.refinedDraft) {
+      setCurrentReply(refineWithInstructionState.refinedDraft);
+      setEditInstruction(""); // Clear instruction input
+      toast({ title: "Draft Refined", description: "AI has refined your response based on your instruction." });
+    }
+    if (refineWithInstructionState?.error) {
+      toast({ variant: "destructive", title: "Error Refining", description: refineWithInstructionState.error });
+    }
+  }, [refineWithInstructionState, toast]);
 
   useEffect(() => {
     if (saveState?.success) {
@@ -90,6 +123,12 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, p
     formData.set('draft', currentReply);
     improveFormAction(formData);
   };
+  
+  const handleRefineWithInstructionSubmit = (formData: FormData) => {
+    formData.set('currentDraft', currentReply);
+    formData.set('instruction', editInstruction);
+    refineWithInstructionFormAction(formData);
+  };
 
   const handleSaveSubmit = (formData: FormData) => {
     formData.set('receivedEmail', primaryInput); 
@@ -98,17 +137,17 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, p
   };
   
   let cardTitle = "Compose Your Reply";
-  let cardDescription = "Edit the AI-generated reply or write your own. You can also ask AI to improve it.";
+  let cardDescription = "Edit the AI-generated reply or write your own. You can also ask AI to improve it or provide specific editing instructions.";
 
   if (selectedMode === 'jobPosting') {
     cardTitle = "Edit Job Posting Draft";
-    cardDescription = "Refine the AI-drafted job posting or write your own. You can ask AI to improve it.";
+    cardDescription = "Refine the AI-drafted job posting. Use AI for general improvements or give specific instructions.";
   } else if (selectedMode === 'casualMessage') {
     cardTitle = "Edit Casual Message";
-    cardDescription = "Adjust the AI-generated message or write your own. Use AI to enhance it.";
+    cardDescription = "Adjust the AI-generated message. Use AI to enhance it or provide specific editing instructions.";
   } else if (selectedMode === 'applyToJob') {
     cardTitle = "Edit Application Email";
-    cardDescription = "Refine your AI-drafted application email or write your own. You can ask AI to improve it.";
+    cardDescription = "Refine your AI-drafted application email. Use AI for general improvements or give specific instructions.";
   }
 
 
@@ -138,6 +177,13 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, p
               <AlertDescription>{improveState.error}</AlertDescription>
             </Alert>
           )}
+         {refineWithInstructionState?.error && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Refinement Error</AlertTitle>
+              <AlertDescription>{refineWithInstructionState.error}</AlertDescription>
+            </Alert>
+          )}
         {saveState?.error && (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
@@ -157,6 +203,33 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, p
           <SaveButton />
         </form>
       </CardFooter>
+      
+      <Separator className="my-6" />
+
+      <CardHeader className="pt-0">
+        <CardTitle className="font-headline text-xl">Suggest Specific Edits</CardTitle>
+        <CardDescription>Provide instructions for the AI to refine the draft above.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <form action={handleRefineWithInstructionSubmit} className="space-y-4">
+            <div>
+                <Label htmlFor="editInstruction" className="sr-only">Your Editing Suggestion</Label>
+                <Textarea
+                    id="editInstruction"
+                    name="editInstruction"
+                    value={editInstruction}
+                    onChange={(e) => setEditInstruction(e.target.value)}
+                    placeholder="e.g., 'Make the tone more formal', 'Add a sentence about...', 'Shorten the second paragraph'"
+                    rows={3}
+                    className="min-h-[70px] resize-y"
+                />
+                <input type="hidden" name="currentDraft" value={currentReply} />
+            </div>
+            <div className="flex justify-end">
+                <RefineWithInstructionButton />
+            </div>
+        </form>
+      </CardContent>
     </Card>
   );
 };

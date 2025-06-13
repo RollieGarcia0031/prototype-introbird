@@ -4,6 +4,7 @@
 
 import { generateReplySuggestions } from "@/ai/flows/generate-reply-suggestions";
 import { improveReplyDraft } from "@/ai/flows/improve-reply-draft";
+import { refineDraftWithInstruction } from "@/ai/flows/refine-draft-with-instruction";
 import { z } from "zod";
 
 // Schema for received email input / primary content input
@@ -14,10 +15,17 @@ const PrimaryContentSchema = z.object({
   }),
 });
 
-// Schema for reply draft input
+// Schema for reply draft input (used by general "Improve" action)
 const ReplyDraftSchema = z.object({
   draft: z.string().min(5, "Draft must be at least 5 characters long."),
 });
+
+// Schema for refining draft with instruction
+const RefineWithInstructionSchema = z.object({
+  currentDraft: z.string().min(5, "Current draft must be at least 5 characters long."),
+  instruction: z.string().min(3, "Instruction must be at least 3 characters long."),
+});
+
 
 // Schema for saving interaction
 const SaveInteractionSchema = z.object({
@@ -77,6 +85,35 @@ export async function improveDraftAction(prevState: any, formData: FormData) {
   }
 }
 
+export async function refineWithInstructionAction(prevState: any, formData: FormData) {
+  const rawFormData = {
+    currentDraft: formData.get("currentDraft") as string,
+    instruction: formData.get("instruction") as string,
+  };
+
+  const validatedFields = RefineWithInstructionSchema.safeParse(rawFormData);
+
+  if (!validatedFields.success) {
+    return {
+      error: "Invalid input for refinement. " + (validatedFields.error.issues[0]?.message || ""),
+      refinedDraft: null,
+    };
+  }
+
+  try {
+    const result = await refineDraftWithInstruction({ 
+      currentDraft: validatedFields.data.currentDraft,
+      instruction: validatedFields.data.instruction 
+    });
+    return { refinedDraft: result.refinedDraft, error: null };
+  } catch (error) {
+    console.error("Error refining draft with instruction:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return { error: `Failed to refine draft: ${errorMessage}. Please try again.`, refinedDraft: null };
+  }
+}
+
+
 export async function saveInteractionAction(prevState: any, formData: FormData) {
   const rawFormData = {
     receivedEmail: formData.get("receivedEmail") as string, 
@@ -93,7 +130,9 @@ export async function saveInteractionAction(prevState: any, formData: FormData) 
   }
   
   try {
+    // Placeholder for actual save logic (e.g., to Firestore)
     console.log("Saving interaction:", validatedFields.data);
+    // Simulate save
     return { success: true, error: null };
   } catch (error) {
     console.error("Error saving interaction:", error);
