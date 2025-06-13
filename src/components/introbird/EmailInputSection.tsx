@@ -17,7 +17,7 @@ import { generateRepliesAction } from '@/app/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AVAILABLE_MODELS } from '@/ai/genkit';
+import { AVAILABLE_MODELS } from '@/ai/model-definitions'; // Updated import
 
 export type SelectedMode = "reply" | "jobPosting" | "casualMessage" | "applyToJob" | "rewriteMessage";
 
@@ -201,7 +201,7 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={AVAILABLE_MODELS.GEMINI_FLASH}>Gemini Flash (Default)</SelectItem>
-                  {/* <SelectItem value={AVAILABLE_MODELS.OPENAI_GPT4O_MINI}>OpenAI GPT-4o Mini</SelectItem> */}
+                  
                 </SelectContent>
               </Select>
             </div>
@@ -278,4 +278,3 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({
 };
 
 export default EmailInputSection;
-
