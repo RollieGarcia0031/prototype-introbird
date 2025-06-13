@@ -4,14 +4,6 @@ import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, type Firestore } from 'firebase/firestore';
 
 // Ensure your .env.local file has these variables defined.
-// Example .env.local:
-// NEXT_PUBLIC_FIREBASE_API_KEY="your_api_key"
-// NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="your_auth_domain"
-// NEXT_PUBLIC_FIREBASE_PROJECT_ID="your_project_id"
-// NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="your_storage_bucket"
-// NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="your_messaging_sender_id"
-// NEXT_PUBLIC_FIREBASE_APP_ID="your_app_id"
-
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -38,20 +30,28 @@ db = getFirestore(app);
 // Firestore helper functions for user customization data
 const USER_CUSTOMIZATION_COLLECTION = "Introbird_users";
 
-export async function saveUserCustomization(userId: string, customizationText: string): Promise<void> {
+export async function saveUserCustomization(userId: string, customizationText: string, resumeSummary?: string): Promise<void> {
   if (!userId) throw new Error("User ID is required to save customization data.");
   const userDocRef = doc(db, USER_CUSTOMIZATION_COLLECTION, userId);
-  await setDoc(userDocRef, { customizationText }, { merge: true }); // merge: true to avoid overwriting other fields if any
+  const dataToSave: { customizationText: string; resumeSummary?: string } = { customizationText };
+  if (resumeSummary !== undefined) {
+    dataToSave.resumeSummary = resumeSummary;
+  }
+  await setDoc(userDocRef, dataToSave, { merge: true });
 }
 
-export async function getUserCustomization(userId: string): Promise<string | null> {
+export async function getUserCustomization(userId: string): Promise<{ customizationText: string | null; resumeSummary: string | null }> {
   if (!userId) throw new Error("User ID is required to get customization data.");
   const userDocRef = doc(db, USER_CUSTOMIZATION_COLLECTION, userId);
   const docSnap = await getDoc(userDocRef);
   if (docSnap.exists()) {
-    return docSnap.data()?.customizationText || null;
+    const data = docSnap.data();
+    return {
+      customizationText: data?.customizationText || null,
+      resumeSummary: data?.resumeSummary || null
+    };
   }
-  return null;
+  return { customizationText: null, resumeSummary: null };
 }
 
 

@@ -1,7 +1,7 @@
 // src/app/customization/page.tsx
 "use client";
 
-import React, { useState, useEffect, type FormEvent } from 'react';
+import React, { useState, useEffect, type FormEvent, useRef } from 'react';
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,12 +10,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save } from 'lucide-react';
-import { getUserCustomization } from '@/lib/firebase'; // Direct client-side fetch for initial load
-import { saveCustomizationAction } from './actions';
+import { Loader2, Save, UploadCloud, FileText, AlertTriangleIcon } from 'lucide-react';
+import { getUserCustomization } from '@/lib/firebase'; 
+import { saveCustomizationAction, summarizeResumeAction } from './actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 
 function SubmitButton() {
@@ -23,7 +24,7 @@ function SubmitButton() {
   return (
     <Button type="submit" className="w-full sm:w-auto" disabled={pending} aria-label="Save Customization">
       {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-      Save Customization
+      Save All Customizations
     </Button>
   );
 }
@@ -34,14 +35,20 @@ export default function CustomizationPage() {
   const { toast } = useToast();
 
   const [customizationText, setCustomizationText] = useState('');
+  const [resumeSummaryText, setResumeSummaryText] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isFetchingData, setIsFetchingData] = useState(true);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [summarizationError, setSummarizationError] = useState<string | null>(null);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const initialState = { message: undefined, error: undefined, success: undefined };
-  const [state, formAction] = useActionState(saveCustomizationAction, initialState);
+  const saveInitialState = { message: undefined, error: undefined, success: undefined };
+  const [saveState, saveFormAction] = useActionState(saveCustomizationAction, saveInitialState);
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/'); // Redirect to home if not logged in
+      router.push('/'); 
     }
   }, [user, authLoading, router]);
 
@@ -50,9 +57,8 @@ export default function CustomizationPage() {
       setIsFetchingData(true);
       getUserCustomization(user.uid)
         .then((data) => {
-          if (data !== null) {
-            setCustomizationText(data);
-          }
+          setCustomizationText(data?.customizationText || '');
+          setResumeSummaryText(data?.resumeSummary || '');
         })
         .catch((error) => {
           console.error("Error fetching customization data:", error);
@@ -66,26 +72,112 @@ export default function CustomizationPage() {
           setIsFetchingData(false);
         });
     } else if (!authLoading) {
-      // If there's no user and auth is not loading, stop fetching attempt.
       setIsFetchingData(false);
     }
   }, [user, toast, authLoading]);
 
   useEffect(() => {
-    if (state?.success && state.message) {
+    if (saveState?.success && saveState.message) {
       toast({
         title: "Success!",
-        description: state.message,
+        description: saveState.message,
       });
     }
-    if (!state?.success && state?.error) {
+    if (!saveState?.success && saveState?.error) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: state.error,
+        title: "Save Error",
+        description: saveState.error,
       });
     }
-  }, [state, toast]);
+  }, [saveState, toast]);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      if (file.type === "application/pdf") {
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+            toast({
+                variant: "destructive",
+                title: "File too large",
+                description: "Please upload a PDF smaller than 5MB.",
+            });
+            setSelectedFile(null);
+            if(fileInputRef.current) fileInputRef.current.value = ""; // Reset file input
+            return;
+        }
+        setSelectedFile(file);
+        setSummarizationError(null);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Invalid File Type",
+          description: "Please upload a PDF file.",
+        });
+        setSelectedFile(null);
+        if(fileInputRef.current) fileInputRef.current.value = ""; // Reset file input
+      }
+    }
+  };
+
+  const fileToDataUri = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleSummarizeResume = async () => {
+    if (!selectedFile || !user) {
+      toast({
+        variant: "destructive",
+        title: "No file selected",
+        description: "Please select a PDF resume to summarize.",
+      });
+      return;
+    }
+
+    setIsSummarizing(true);
+    setSummarizationError(null);
+
+    try {
+      const dataUri = await fileToDataUri(selectedFile);
+      const formData = new FormData();
+      formData.append('resumePdfDataUri', dataUri);
+      formData.append('userId', user.uid); // Include userId
+
+      // We are not using useActionState for this one, simple async call
+      const result = await summarizeResumeAction({}, formData); // Pass empty prev state
+
+      if (result.summary) {
+        setResumeSummaryText(result.summary);
+        toast({
+          title: "Resume Summarized",
+          description: "The AI has generated a summary from your resume.",
+        });
+      } else if (result.error) {
+        setSummarizationError(result.error);
+        toast({
+          variant: "destructive",
+          title: "Summarization Failed",
+          description: result.error,
+        });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "An unexpected error occurred.";
+      setSummarizationError(message);
+      toast({
+        variant: "destructive",
+        title: "Summarization Error",
+        description: message,
+      });
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
 
   if (authLoading || isFetchingData) {
     return (
@@ -96,13 +188,10 @@ export default function CustomizationPage() {
   }
 
   if (!user) {
-    // This case should ideally be handled by the redirect, but as a fallback:
     return (
       <div className="container mx-auto px-4 py-8 max-w-2xl text-center">
         <Card>
-          <CardHeader>
-            <CardTitle>Access Denied</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Access Denied</CardTitle></CardHeader>
           <CardContent>
             <p>You must be logged in to access this page.</p>
             <Button onClick={() => router.push('/')} className="mt-4">Go to Homepage</Button>
@@ -113,55 +202,118 @@ export default function CustomizationPage() {
   }
 
   return (
-    <main className="container mx-auto px-4 py-8 max-w-2xl">
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="font-headline text-xl sm:text-2xl">Your Customization</CardTitle>
-          <CardDescription>
-            Save your skills summary, personal bio, or any other information you want the AI to consider when drafting content for you. This data will be stored securely.
-          </CardDescription>
-        </CardHeader>
-        <form action={formAction}>
-          <CardContent className="space-y-4">
+    <main className="container mx-auto px-4 py-8 max-w-3xl">
+      <form action={saveFormAction}>
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="font-headline text-xl sm:text-2xl">Your Customization</CardTitle>
+            <CardDescription>
+              Save your skills summary, personal bio, or any other information for the AI. Upload your resume for an AI-generated summary.
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent className="space-y-6">
             <input type="hidden" name="userId" value={user.uid} />
+            
             <div>
               <Label htmlFor="customizationText" className="text-base font-medium">
-                Your Summary / Skills / Data
+                Your Summary / Skills / Bio
               </Label>
               <Textarea
                 id="customizationText"
                 name="customizationText"
                 value={customizationText}
                 onChange={(e) => setCustomizationText(e.target.value)}
-                placeholder="e.g., Senior software engineer with 10 years of experience in full-stack development, specializing in React, Node.js, and cloud platforms like AWS. Proven ability to lead teams and deliver complex projects..."
-                rows={15}
-                className="mt-2 min-h-[250px] resize-y"
+                placeholder="e.g., Senior software engineer with 10 years of experience..."
+                rows={10}
+                className="mt-2 min-h-[200px] resize-y"
                 aria-describedby="customization-help"
               />
               <p id="customization-help" className="text-sm text-muted-foreground mt-1">
                 Provide any details about yourself that you'd like the AI to use.
               </p>
             </div>
-            {state?.error && !state.success && (
+
+            <Separator />
+
+            <div>
+              <Label htmlFor="resumeUpload" className="text-base font-medium block mb-2">
+                Upload Resume (PDF)
+              </Label>
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                <Input
+                  id="resumeUpload"
+                  name="resumeUpload"
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handleFileChange}
+                  ref={fileInputRef}
+                  className="flex-grow"
+                  aria-describedby="resume-upload-help"
+                />
+                <Button 
+                  type="button" 
+                  onClick={handleSummarizeResume} 
+                  disabled={!selectedFile || isSummarizing}
+                  className="w-full sm:w-auto"
+                >
+                  {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
+                  Summarize Resume
+                </Button>
+              </div>
+              <p id="resume-upload-help" className="text-sm text-muted-foreground mt-1">
+                Max 5MB. The AI will generate a summary from your resume.
+              </p>
+            </div>
+
+            {summarizationError && (
               <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Save Error</AlertTitle>
-                <AlertDescription>{state.error}</AlertDescription>
+                <AlertTriangleIcon className="h-4 w-4" />
+                <AlertTitle>Resume Summarization Error</AlertTitle>
+                <AlertDescription>{summarizationError}</AlertDescription>
               </Alert>
             )}
-             {state?.success && state.message && (
+
+            <div>
+              <Label htmlFor="resumeSummaryText" className="text-base font-medium flex items-center">
+                <FileText className="mr-2 h-5 w-5 text-primary" />
+                AI-Generated Resume Summary (Editable)
+              </Label>
+              <Textarea
+                id="resumeSummaryText"
+                name="resumeSummaryText"
+                value={resumeSummaryText}
+                onChange={(e) => setResumeSummaryText(e.target.value)}
+                placeholder="Resume summary will appear here after processing. You can edit it before saving."
+                rows={15}
+                className="mt-2 min-h-[250px] resize-y bg-muted/30"
+                aria-describedby="resume-summary-help"
+              />
+              <p id="resume-summary-help" className="text-sm text-muted-foreground mt-1">
+                This summary is generated by AI from your uploaded resume. You can edit it.
+              </p>
+            </div>
+            
+            {saveState?.error && !saveState.success && (
+              <Alert variant="destructive">
+                <AlertTriangleIcon className="h-4 w-4" />
+                <AlertTitle>Save Error</AlertTitle>
+                <AlertDescription>{saveState.error}</AlertDescription>
+              </Alert>
+            )}
+             {saveState?.success && saveState.message && (
               <Alert variant="default" className="border-green-500 text-green-700 dark:border-green-400 dark:text-green-300">
-                <Save className="h-4 w-4" />
+                <Save className="h-4 w-4 text-green-700 dark:text-green-300" />
                 <AlertTitle>Success</AlertTitle>
-                <AlertDescription>{state.message}</AlertDescription>
+                <AlertDescription>{saveState.message}</AlertDescription>
               </Alert>
             )}
           </CardContent>
-          <CardFooter className="flex justify-end">
+          <CardFooter className="flex justify-end pt-6">
             <SubmitButton />
           </CardFooter>
-        </form>
-      </Card>
+        </Card>
+      </form>
     </main>
   );
 }
