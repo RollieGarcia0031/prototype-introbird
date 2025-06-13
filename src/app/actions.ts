@@ -1,3 +1,4 @@
+
 // src/app/actions.ts
 "use server";
 
@@ -49,7 +50,8 @@ export async function generateRepliesAction(prevState: any, formData: FormData) 
     return { suggestions: result.suggestions, error: null };
   } catch (error) {
     console.error("Error generating suggestions:", error);
-    return { error: "Failed to generate suggestions. Please try again.", suggestions: [] };
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return { error: `Failed to generate suggestions: ${errorMessage}. Please try again.`, suggestions: [] };
   }
 }
 
@@ -73,7 +75,8 @@ export async function improveDraftAction(prevState: any, formData: FormData) {
     return { refinedDraft: result.refinedDraft, error: null };
   } catch (error) {
     console.error("Error improving draft:", error);
-    return { error: "Failed to improve draft. Please try again.", refinedDraft: null };
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return { error: `Failed to improve draft: ${errorMessage}. Please try again.`, refinedDraft: null };
   }
 }
 
@@ -111,6 +114,8 @@ export async function saveInteractionAction(prevState: any, formData: FormData) 
     return { success: true, error: null };
   } catch (error) {
     console.error("Error saving interaction:", error);
-    return { error: "Failed to save interaction. Please try again.", success: false };
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return { error: `Failed to save interaction: ${errorMessage}. Please try again.`, success: false };
   }
 }
+
