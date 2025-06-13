@@ -4,8 +4,8 @@
 
 import type { FC } from 'react';
 import { Button } from "@/components/ui/button";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { LogIn, LogOut } from "lucide-react"; // Import LogOut
+// SidebarTrigger is removed as it's moving to the layout's sidebar header
+import { LogIn, LogOut } from "lucide-react"; 
 
 interface AppHeaderProps {
   isLoggedIn: boolean;
@@ -17,7 +17,7 @@ const AppHeader: FC<AppHeaderProps> = ({ isLoggedIn, onLoginToggle }) => {
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-2">
-          <SidebarTrigger className="h-8 w-8" />
+          {/* SidebarTrigger removed from here */}
           <div>
             <h1 className="font-headline text-3xl font-bold text-primary">IntroBird</h1>
             <p className="text-sm text-muted-foreground hidden sm:block">
@@ -44,3 +44,4 @@ const AppHeader: FC<AppHeaderProps> = ({ isLoggedIn, onLoginToggle }) => {
 };
 
 export default AppHeader;
+
