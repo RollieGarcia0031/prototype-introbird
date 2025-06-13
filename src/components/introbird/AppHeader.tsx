@@ -4,9 +4,10 @@
 import type { FC } from 'react';
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { LogIn, LogOut, User as UserIcon } from "lucide-react"; // Added UserIcon
+import { LogIn, LogOut, User as UserIcon } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
 import AuthDialog from '@/components/auth/AuthDialog';
+import Link from 'next/link';
 
 const AppHeader: FC = () => {
   const { user, logOut, loading } = useAuth();
@@ -25,14 +26,14 @@ const AppHeader: FC = () => {
     <>
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 cursor-pointer" aria-label="Go to homepage">
             <div>
               <h1 className="font-headline text-3xl font-bold text-primary">IntroBird</h1>
               <p className="text-sm text-muted-foreground hidden sm:block">
                 AI-powered email replies, simplified.
               </p>
             </div>
-          </div>
+          </Link>
           {!loading && (
             user ? (
               <div className="flex items-center gap-4">

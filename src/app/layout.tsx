@@ -15,7 +15,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import AppHeader from '@/components/introbird/AppHeader';
-import { Settings, Palette as CustomizationIcon, Loader2 } from "lucide-react";
+import { Settings, Palette as CustomizationIcon, Loader2, Home } from "lucide-react"; // Added Home icon
 import React from 'react';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
@@ -41,9 +41,11 @@ const RootLayoutContent = ({ children }: { children: React.ReactNode }) => {
         <SidebarContent className="p-2">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton tooltip="Settings">
-                <Settings />
-                <span className="group-data-[state=collapsed]:hidden">Settings</span>
+              <SidebarMenuButton asChild tooltip="Application Assistant">
+                <Link href="/">
+                  <Home />
+                  <span className="group-data-[state=collapsed]:hidden">Application Assistant</span>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
@@ -57,6 +59,12 @@ const RootLayoutContent = ({ children }: { children: React.ReactNode }) => {
                   <CustomizationIcon />
                   <span className="group-data-[state=collapsed]:hidden">Customization</span>
                 </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton tooltip="Settings">
+                <Settings />
+                <span className="group-data-[state=collapsed]:hidden">Settings</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
