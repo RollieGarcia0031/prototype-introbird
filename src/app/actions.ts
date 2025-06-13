@@ -12,6 +12,8 @@ const PrimaryContentSchema = z.object({
   selectedMode: z.enum(['reply', 'jobPosting', 'casualMessage', 'applyToJob', 'rewriteMessage'], {
     errorMap: () => ({ message: "Invalid mode selected." })
   }),
+  tone: z.string().optional(),
+  charLimit: z.coerce.number().positive("Character limit must be a positive number.").optional(),
 });
 
 // Schema for reply draft input (used by general "Improve" action)
@@ -30,8 +32,10 @@ export async function generateRepliesAction(prevState: any, formData: FormData) 
   const rawFormData = {
     primaryContent: formData.get("primaryContent") as string,
     selectedMode: formData.get("selectedMode") as "reply" | "jobPosting" | "casualMessage" | "applyToJob" | "rewriteMessage",
+    tone: formData.get("tone") as string || undefined, // Handle empty string from FormData
+    charLimit: formData.get("charLimit") ? Number(formData.get("charLimit")) : undefined,
   };
-
+  
   const validatedFields = PrimaryContentSchema.safeParse(rawFormData);
 
   if (!validatedFields.success) {
@@ -40,11 +44,15 @@ export async function generateRepliesAction(prevState: any, formData: FormData) 
       suggestions: [],
     };
   }
+  
+  const { primaryContent, selectedMode, tone, charLimit } = validatedFields.data;
 
   try {
     const result = await generateReplySuggestions({ 
-      emailContent: validatedFields.data.primaryContent, 
-      selectedMode: validatedFields.data.selectedMode 
+      emailContent: primaryContent, 
+      selectedMode: selectedMode,
+      tone: tone,
+      charLimit: charLimit,
     });
     return { suggestions: result.suggestions, error: null };
   } catch (error) {

@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertTriangle, Loader2, Sparkles, MessagesSquare, Briefcase, Send, RefreshCw } from "lucide-react";
 import { generateRepliesAction } from '@/app/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -28,6 +30,7 @@ interface ModeConfig {
   placeholder: string;
   buttonText: string;
   icon: React.ElementType;
+  hasToneAndLimitOptions?: boolean;
 }
 
 const modeConfigs: Record<SelectedMode, ModeConfig> = {
@@ -40,10 +43,11 @@ const modeConfigs: Record<SelectedMode, ModeConfig> = {
   },
   jobPosting: {
     title: "Job Posting Details",
-    description: "Provide details about the job (title, responsibilities, qualifications, company info) to draft a posting email for recruiters/hirers.",
+    description: "Provide details about the job to draft a posting email. You can specify tone and character limit.",
     placeholder: "Enter job title, key responsibilities, required qualifications, company overview, benefits, etc.",
     buttonText: "Draft Job Posting Email",
     icon: Briefcase,
+    hasToneAndLimitOptions: true,
   },
   applyToJob: {
     title: "Apply to Job Posting",
@@ -54,10 +58,11 @@ const modeConfigs: Record<SelectedMode, ModeConfig> = {
   },
   casualMessage: {
     title: "Casual Message Context",
-    description: "Describe the situation or topic for your Telegram/Messenger message.",
+    description: "Describe the situation for your message. You can specify tone and character limit.",
     placeholder: "E.g., 'Want to ask a friend to hang out this weekend', 'Need to congratulate a colleague on their promotion'",
     buttonText: "Generate Messages",
     icon: MessagesSquare,
+    hasToneAndLimitOptions: true,
   },
   rewriteMessage: {
     title: "Your Text to Rewrite",
@@ -67,6 +72,14 @@ const modeConfigs: Record<SelectedMode, ModeConfig> = {
     icon: RefreshCw,
   }
 };
+
+const toneOptions = [
+  { value: "formal", label: "Formal" },
+  { value: "semi-formal", label: "Semi-formal" },
+  { value: "eager/excited", label: "Eager/Excited" },
+  { value: "simple", label: "Simple" },
+  { value: "very short and casual", label: "Very Short & Casual" },
+];
 
 function SubmitButton({ mode }: { mode: SelectedMode }) {
   const { pending } = useFormStatus();
@@ -88,11 +101,17 @@ function SubmitButton({ mode }: { mode: SelectedMode }) {
 const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelectedMode, onSuggestionsGenerated, setPrimaryInput }) => {
   const initialState = { suggestions: [], error: null };
   const [state, formAction] = useActionState(generateRepliesAction, initialState);
+  const [selectedTone, setSelectedTone] = React.useState<string>("");
 
   const handleFormAction = (formData: FormData) => {
     const primaryContent = formData.get("primaryContent") as string;
     setPrimaryInput(primaryContent);
     formData.set("selectedMode", selectedMode);
+    if (modeConfigs[selectedMode].hasToneAndLimitOptions) {
+      if (selectedTone) {
+        formData.set("tone", selectedTone);
+      }
+    }
     formAction(formData);
   };
 
@@ -117,7 +136,10 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
             <RadioGroup
               id="modeSelection"
               value={selectedMode}
-              onValueChange={(value) => setSelectedMode(value as SelectedMode)}
+              onValueChange={(value) => {
+                setSelectedMode(value as SelectedMode);
+                setSelectedTone(""); // Reset tone when mode changes
+              }}
               className="flex flex-col sm:flex-row flex-wrap gap-4 mt-2"
             >
               <div className="flex items-center space-x-2">
@@ -142,6 +164,37 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
               </div>
             </RadioGroup>
           </div>
+
+          {currentConfig.hasToneAndLimitOptions && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="tone" className="text-base font-medium">Tone/Style (Optional)</Label>
+                <Select name="tone" value={selectedTone} onValueChange={setSelectedTone}>
+                  <SelectTrigger id="tone" className="mt-1">
+                    <SelectValue placeholder="Select a tone..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {toneOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="charLimit" className="text-base font-medium">Character Limit (Optional)</Label>
+                <Input
+                  id="charLimit"
+                  name="charLimit"
+                  type="number"
+                  placeholder="E.g., 150"
+                  className="mt-1"
+                  min="10"
+                />
+              </div>
+            </div>
+          )}
 
           <div>
             <Label htmlFor="primaryContent" className="sr-only">{currentConfig.title}</Label>

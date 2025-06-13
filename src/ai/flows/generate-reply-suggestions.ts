@@ -16,6 +16,8 @@ import {z} from 'genkit';
 const GenerateReplySuggestionsInputSchema = z.object({
   emailContent: z.string().describe('The content of the email to reply to, job description details, casual message context, job posting to apply to, or text to rewrite.'),
   selectedMode: z.enum(['reply', 'jobPosting', 'casualMessage', 'applyToJob', 'rewriteMessage']).describe('The selected mode for generation.'),
+  tone: z.string().optional().describe('The desired tone or style for the message (e.g., formal, casual). Relevant for jobPosting and casualMessage modes.'),
+  charLimit: z.number().optional().describe('An approximate character limit for the generated message. Relevant for jobPosting and casualMessage modes.'),
 });
 export type GenerateReplySuggestionsInput = z.infer<typeof GenerateReplySuggestionsInputSchema>;
 
@@ -27,7 +29,9 @@ const GenerateReplySuggestionsPromptPayloadSchema = z.object({
   isApplyToJobMode: z.boolean().describe('True if the mode is to draft an application email for a job posting (for applicants).'),
   isCasualMessageMode: z.boolean().describe('True if the mode is to write a casual message.'),
   isRewriteMessageMode: z.boolean().describe('True if the mode is to rewrite the provided text.'),
-  selectedMode: z.enum(['reply', 'jobPosting', 'casualMessage', 'applyToJob', 'rewriteMessage']).describe('The selected mode for generation.')
+  selectedMode: z.enum(['reply', 'jobPosting', 'casualMessage', 'applyToJob', 'rewriteMessage']).describe('The selected mode for generation.'),
+  tone: z.string().optional().describe('The desired tone for the output.'),
+  charLimit: z.number().optional().describe('The approximate character limit for the output.')
 });
 type GenerateReplySuggestionsPromptPayload = z.infer<typeof GenerateReplySuggestionsPromptPayloadSchema>;
 
@@ -63,6 +67,8 @@ You are an AI assistant specialized in crafting compelling job posting emails fo
 Based on the provided job description details, generate a complete draft for a job posting email.
 The email should be professional, engaging, and clearly outline the role, responsibilities, qualifications, and company culture (if provided).
 Include a clear call to action for interested candidates. If details are sparse, create a plausible and comprehensive job posting.
+{{#if tone}}Please adopt the following tone: {{{tone}}}.{{/if}}
+{{#if charLimit}}Please try to keep the email to approximately {{{charLimit}}} characters.{{/if}}
 
 Job Description Details: {{{emailContent}}}
 
@@ -82,6 +88,8 @@ Application Email Draft (provide as a single suggestion in the array):
 You are an AI assistant skilled at writing casual and semi-formal messages for platforms like Telegram or Messenger.
 Based on the user's input about the message context, generate three distinct message options.
 The messages should be friendly, concise, and appropriate for the described situation. Vary the tone slightly for each option.
+{{#if tone}}Please adopt the following tone: {{{tone}}}.{{/if}}
+{{#if charLimit}}Please try to keep each message option to approximately {{{charLimit}}} characters.{{/if}}
 
 Message Context: {{{emailContent}}}
 
@@ -137,6 +145,8 @@ const generateReplySuggestionsFlow = ai.defineFlow(
       isApplyToJobMode: flowInput.selectedMode === 'applyToJob',
       isCasualMessageMode: flowInput.selectedMode === 'casualMessage',
       isRewriteMessageMode: flowInput.selectedMode === 'rewriteMessage',
+      tone: flowInput.tone,
+      charLimit: flowInput.charLimit,
     };
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
