@@ -57,7 +57,13 @@ function SubmitButton({ mode }: { mode: SelectedMode }) {
   const { pending } = useFormStatus();
   const Icon = modeConfigs[mode].icon;
   return (
-    <Button type="submit" className="w-full sm:w-auto" disabled={pending} aria-label={modeConfigs[mode].buttonText}>
+    <Button
+      type="submit"
+      className="w-full sm:w-auto"
+      disabled={pending}
+      aria-label={modeConfigs[mode].buttonText}
+      suppressHydrationWarning={true}
+    >
       {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Icon className="mr-2 h-4 w-4" />}
       {modeConfigs[mode].buttonText}
     </Button>

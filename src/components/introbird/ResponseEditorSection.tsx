@@ -22,7 +22,14 @@ interface ResponseEditorSectionProps {
 function ImproveButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="outline" className="w-full sm:w-auto" disabled={pending} aria-label="Improve with AI">
+    <Button
+      type="submit"
+      variant="outline"
+      className="w-full sm:w-auto"
+      disabled={pending}
+      aria-label="Improve with AI"
+      suppressHydrationWarning={true}
+    >
       {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />}
       Improve with AI
     </Button>
@@ -32,7 +39,14 @@ function ImproveButton() {
 function SaveButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="default" className="w-full sm:w-auto" disabled={pending} aria-label="Save Interaction">
+    <Button
+      type="submit"
+      variant="default"
+      className="w-full sm:w-auto"
+      disabled={pending}
+      aria-label="Save Interaction"
+      suppressHydrationWarning={true}
+    >
       {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Disc className="mr-2 h-4 w-4" />}
       Save Interaction
     </Button>
