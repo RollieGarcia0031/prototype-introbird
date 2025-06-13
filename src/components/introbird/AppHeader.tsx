@@ -4,7 +4,7 @@
 import type { FC } from 'react';
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { LogIn, LogOut } from "lucide-react";
+import { LogIn, LogOut, User as UserIcon } from "lucide-react"; // Added UserIcon
 import { useAuth } from '@/contexts/AuthContext';
 import AuthDialog from '@/components/auth/AuthDialog';
 
@@ -35,10 +35,18 @@ const AppHeader: FC = () => {
           </div>
           {!loading && (
             user ? (
-              <Button variant="outline" onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
-              </Button>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <UserIcon className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground hidden sm:inline">
+                    {user.displayName || user.email}
+                  </span>
+                </div>
+                <Button variant="outline" onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </Button>
+              </div>
             ) : (
               <Button variant="outline" onClick={() => setIsAuthDialogOpen(true)}>
                 <LogIn className="mr-2 h-4 w-4" />
