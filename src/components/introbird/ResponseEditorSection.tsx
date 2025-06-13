@@ -7,8 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { AlertTriangle, BrainCircuit, Disc, Loader2, Edit } from "lucide-react";
-import { improveDraftAction, saveInteractionAction, refineWithInstructionAction } from '@/app/actions';
+import { AlertTriangle, BrainCircuit, Loader2, Edit, Copy } from "lucide-react";
+import { improveDraftAction, refineWithInstructionAction } from '@/app/actions';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { SelectedMode } from './EmailInputSection';
@@ -16,7 +16,6 @@ import { Separator } from '../ui/separator';
 
 interface ResponseEditorSectionProps {
   initialReply: string;
-  primaryInput: string;
   selectedMode: SelectedMode;
 }
 
@@ -54,24 +53,7 @@ function RefineWithInstructionButton() {
   );
 }
 
-function SaveButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button
-      type="submit"
-      variant="default"
-      className="w-full sm:w-auto"
-      disabled={pending}
-      aria-label="Save Interaction"
-      suppressHydrationWarning={true}
-    >
-      {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Disc className="mr-2 h-4 w-4" />}
-      Save Interaction
-    </Button>
-  );
-}
-
-const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, primaryInput, selectedMode }) => {
+const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, selectedMode }) => {
   const [currentReply, setCurrentReply] = useState(initialReply);
   const [editInstruction, setEditInstruction] = useState("");
   const { toast } = useToast();
@@ -81,9 +63,6 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, p
   
   const refineWithInstructionInitialState = { refinedDraft: null, error: null };
   const [refineWithInstructionState, refineWithInstructionFormAction] = useActionState(refineWithInstructionAction, refineWithInstructionInitialState);
-
-  const saveInitialState = { success: false, error: null };
-  const [saveState, saveFormAction] = useActionState(saveInteractionAction, saveInitialState);
 
   useEffect(() => {
     setCurrentReply(initialReply);
@@ -110,15 +89,6 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, p
     }
   }, [refineWithInstructionState, toast]);
 
-  useEffect(() => {
-    if (saveState?.success) {
-      toast({ title: "Interaction Saved", description: "Your interaction has been saved." });
-    }
-    if (saveState?.error) {
-      toast({ variant: "destructive", title: "Error Saving", description: saveState.error });
-    }
-  }, [saveState, toast]);
-
   const handleImproveSubmit = (formData: FormData) => {
     formData.set('draft', currentReply);
     improveFormAction(formData);
@@ -130,10 +100,14 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, p
     refineWithInstructionFormAction(formData);
   };
 
-  const handleSaveSubmit = (formData: FormData) => {
-    formData.set('receivedEmail', primaryInput); 
-    formData.set('reply', currentReply);
-    saveFormAction(formData);
+  const handleCopyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(currentReply);
+      toast({ title: "Copied to Clipboard", description: "The response has been copied." });
+    } catch (err) {
+      toast({ variant: "destructive", title: "Copy Failed", description: "Could not copy text to clipboard." });
+      console.error("Failed to copy text: ", err);
+    }
   };
   
   let cardTitle = "Compose Your Reply";
@@ -150,6 +124,7 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, p
     cardDescription = "Refine your AI-drafted application email. Use AI for general improvements or give specific instructions.";
   }
 
+  const instructionPlaceholder = `e.g., 'Make it more ${selectedMode === 'reply' || selectedMode === 'applyToJob' ? 'formal' : (selectedMode === 'jobPosting' ? 'engaging' : 'casual')}', 'Shorten it'`;
 
   return (
     <Card className="shadow-lg">
@@ -184,31 +159,30 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, p
               <AlertDescription>{refineWithInstructionState.error}</AlertDescription>
             </Alert>
           )}
-        {saveState?.error && (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Save Error</AlertTitle>
-              <AlertDescription>{saveState.error}</AlertDescription>
-            </Alert>
-          )}
       </CardContent>
       <CardFooter className="flex flex-col sm:flex-row justify-between gap-2">
         <form action={handleImproveSubmit} className="w-full sm:w-auto">
            <input type="hidden" name="draft" value={currentReply} />
            <ImproveButton />
         </form>
-        <form action={handleSaveSubmit} className="w-full sm:w-auto">
-          <input type="hidden" name="receivedEmail" value={primaryInput} />
-          <input type="hidden" name="reply" value={currentReply} />
-          <SaveButton />
-        </form>
+        <Button
+          variant="default"
+          className="w-full sm:w-auto"
+          onClick={handleCopyToClipboard}
+          aria-label="Copy to Clipboard"
+        >
+          <Copy className="mr-2 h-4 w-4" />
+          Copy to Clipboard
+        </Button>
       </CardFooter>
       
       <Separator className="my-6" />
 
       <CardHeader className="pt-0">
         <CardTitle className="font-headline text-xl">Suggest Specific Edits</CardTitle>
-        <CardDescription>Provide instructions for the AI to refine the draft above.</CardDescription>
+        <CardDescription>
+          Provide instructions for the AI to refine the draft above.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <form action={handleRefineWithInstructionSubmit} className="space-y-4">
@@ -219,7 +193,7 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, p
                     name="editInstruction"
                     value={editInstruction}
                     onChange={(e) => setEditInstruction(e.target.value)}
-                    placeholder="e.g., 'Make the tone more formal', 'Add a sentence about...', 'Shorten the second paragraph'"
+                    placeholder={instructionPlaceholder}
                     rows={3}
                     className="min-h-[70px] resize-y"
                 />

@@ -56,7 +56,6 @@ export default function IntroBirdPage() {
             <div id="response-editor-section">
               <ResponseEditorSection
                 initialReply={currentReply}
-                primaryInput={receivedEmail} // Renamed prop
                 selectedMode={selectedMode}
               />
             </div>
