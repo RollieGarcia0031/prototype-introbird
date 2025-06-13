@@ -2,7 +2,7 @@
 'use server';
 
 /**
- * @fileOverview AI agent for generating text based on selected mode (email reply, job posting, casual message, apply to job).
+ * @fileOverview AI agent for generating text based on selected mode (email reply, job posting, casual message, apply to job, rewrite message).
  *
  * - generateReplySuggestions - A function that handles the generation of text suggestions.
  * - GenerateReplySuggestionsInput - The input type for the generateReplySuggestions function.
@@ -14,8 +14,8 @@ import {z} from 'genkit';
 
 // Schema for the overall flow input
 const GenerateReplySuggestionsInputSchema = z.object({
-  emailContent: z.string().describe('The content of the email to reply to, job description details, casual message context, or job posting to apply to.'),
-  selectedMode: z.enum(['reply', 'jobPosting', 'casualMessage', 'applyToJob']).describe('The selected mode for generation.'),
+  emailContent: z.string().describe('The content of the email to reply to, job description details, casual message context, job posting to apply to, or text to rewrite.'),
+  selectedMode: z.enum(['reply', 'jobPosting', 'casualMessage', 'applyToJob', 'rewriteMessage']).describe('The selected mode for generation.'),
 });
 export type GenerateReplySuggestionsInput = z.infer<typeof GenerateReplySuggestionsInputSchema>;
 
@@ -26,7 +26,8 @@ const GenerateReplySuggestionsPromptPayloadSchema = z.object({
   isJobPostingMode: z.boolean().describe('True if the mode is to draft a job posting email (for recruiters).'),
   isApplyToJobMode: z.boolean().describe('True if the mode is to draft an application email for a job posting (for applicants).'),
   isCasualMessageMode: z.boolean().describe('True if the mode is to write a casual message.'),
-  selectedMode: z.enum(['reply', 'jobPosting', 'casualMessage', 'applyToJob']).describe('The selected mode for generation.')
+  isRewriteMessageMode: z.boolean().describe('True if the mode is to rewrite the provided text.'),
+  selectedMode: z.enum(['reply', 'jobPosting', 'casualMessage', 'applyToJob', 'rewriteMessage']).describe('The selected mode for generation.')
 });
 type GenerateReplySuggestionsPromptPayload = z.infer<typeof GenerateReplySuggestionsPromptPayloadSchema>;
 
@@ -34,7 +35,7 @@ type GenerateReplySuggestionsPromptPayload = z.infer<typeof GenerateReplySuggest
 const GenerateReplySuggestionsOutputSchema = z.object({
   suggestions: z
     .array(z.string())
-    .describe('An array of suggested replies, a job posting draft, an application email draft, or casual message options, tailored to the input and mode.'),
+    .describe('An array of suggested replies, a job posting draft, an application email draft, casual message options, or a rewritten text, tailored to the input and mode.'),
 });
 export type GenerateReplySuggestionsOutput = z.infer<typeof GenerateReplySuggestionsOutputSchema>;
 
@@ -85,6 +86,14 @@ The messages should be friendly, concise, and appropriate for the described situ
 Message Context: {{{emailContent}}}
 
 Message Options:
+{{else if isRewriteMessageMode}}
+You are an AI assistant skilled at rewriting and rephrasing text.
+The user will provide a piece of text. Your task is to rewrite it. You can aim to improve clarity, adjust the tone, make it more concise, or enhance its overall style.
+Provide one rewritten version of the text.
+
+Original Text: {{{emailContent}}}
+
+Rewritten Text (provide as a single suggestion in the array):
 {{else}}
 You are a helpful AI assistant. Please process the following input: {{{emailContent}}} for mode {{{selectedMode}}}.
 {{/if}}
@@ -127,12 +136,13 @@ const generateReplySuggestionsFlow = ai.defineFlow(
       isJobPostingMode: flowInput.selectedMode === 'jobPosting',
       isApplyToJobMode: flowInput.selectedMode === 'applyToJob',
       isCasualMessageMode: flowInput.selectedMode === 'casualMessage',
+      isRewriteMessageMode: flowInput.selectedMode === 'rewriteMessage',
     };
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
         const {output} = await prompt(promptPayload);
-        if ((flowInput.selectedMode === 'jobPosting' || flowInput.selectedMode === 'applyToJob') && output && output.suggestions.length > 0 && typeof output.suggestions[0] === 'string') {
+        if ((flowInput.selectedMode === 'jobPosting' || flowInput.selectedMode === 'applyToJob' || flowInput.selectedMode === 'rewriteMessage') && output && output.suggestions.length > 0 && typeof output.suggestions[0] === 'string') {
             // The prompt now explicitly asks for it to be a single suggestion in the array for these modes.
         }
         return output!; // Success

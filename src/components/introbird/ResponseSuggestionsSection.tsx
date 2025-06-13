@@ -2,7 +2,7 @@
 import type { FC } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Copy, Edit3, MessageSquare, Send } from "lucide-react"; // Added Send, though Edit3 might be fine
+import { Copy, Edit3, MessageSquare, Send, RefreshCw } from "lucide-react"; 
 import type { SelectedMode } from './EmailInputSection';
 
 interface ResponseSuggestionsSectionProps {
@@ -18,9 +18,11 @@ const getButtonTextAndIcon = (mode: SelectedMode) => {
     case 'jobPosting':
       return { text: "Use this Posting Draft", Icon: Edit3 };
     case 'applyToJob':
-      return { text: "Use this Application Draft", Icon: Edit3 }; // Or Send
+      return { text: "Use this Application Draft", Icon: Edit3 }; 
     case 'casualMessage':
       return { text: "Use this Message", Icon: MessageSquare };
+    case 'rewriteMessage':
+      return { text: "Use this Rewritten Text", Icon: RefreshCw };
     default:
       return { text: "Use this Suggestion", Icon: Copy };
   }
@@ -39,6 +41,8 @@ const ResponseSuggestionsSection: FC<ResponseSuggestionsSectionProps> = ({ sugge
       titleText = "AI Drafted Job Posting";
     } else if (selectedMode === 'applyToJob') {
       titleText = "AI Drafted Application Email";
+    } else if (selectedMode === 'rewriteMessage') {
+      titleText = "AI Rewritten Text";
     }
   }
 
@@ -46,14 +50,15 @@ const ResponseSuggestionsSection: FC<ResponseSuggestionsSectionProps> = ({ sugge
   return (
     <div className="space-y-6">
       <h2 className="font-headline text-xl sm:text-2xl font-semibold text-center">{titleText}</h2>
-      <div className={`grid gap-6 ${suggestions.length === 1 && (selectedMode === 'jobPosting' || selectedMode === 'applyToJob') ? 'md:grid-cols-1' : 'md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3'}`}>
+      <div className={`grid gap-6 ${suggestions.length === 1 && (selectedMode === 'jobPosting' || selectedMode === 'applyToJob' || selectedMode === 'rewriteMessage') ? 'md:grid-cols-1' : 'md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3'}`}>
         {suggestions.map((suggestion, index) => (
           <Card key={index} className="shadow-md flex flex-col">
             <CardHeader>
               <CardTitle className="font-headline text-base sm:text-lg">
                 {suggestions.length > 1 ? `Suggestion ${index + 1}` : 
                   (selectedMode === 'jobPosting' ? 'Job Posting Draft' : 
-                  (selectedMode === 'applyToJob' ? 'Application Email Draft' : 'Suggestion'))}
+                  (selectedMode === 'applyToJob' ? 'Application Email Draft' : 
+                  (selectedMode === 'rewriteMessage' ? 'Rewritten Text' : 'Suggestion')))}
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-grow">

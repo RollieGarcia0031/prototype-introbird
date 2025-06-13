@@ -2,7 +2,7 @@
 "use client";
 
 import React, { type FC, useState, useEffect } from 'react';
-import { useActionState } from 'react'; // Updated import
+import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -113,19 +113,31 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, s
   
   let cardTitle = "Compose Your Reply";
   let cardDescription = "Edit the AI-generated reply or write your own. You can also ask AI to improve it or provide specific editing instructions.";
+  let instructionPlaceholder = "e.g., 'Make it more formal', 'Shorten it'";
 
-  if (selectedMode === 'jobPosting') {
-    cardTitle = "Edit Job Posting Draft";
-    cardDescription = "Refine the AI-drafted job posting. Use AI for general improvements or give specific instructions.";
-  } else if (selectedMode === 'casualMessage') {
-    cardTitle = "Edit Casual Message";
-    cardDescription = "Adjust the AI-generated message. Use AI to enhance it or provide specific editing instructions.";
-  } else if (selectedMode === 'applyToJob') {
-    cardTitle = "Edit Application Email";
-    cardDescription = "Refine your AI-drafted application email. Use AI for general improvements or give specific instructions.";
+  switch (selectedMode) {
+    case 'jobPosting':
+      cardTitle = "Edit Job Posting Draft";
+      cardDescription = "Refine the AI-drafted job posting. Use AI for general improvements or give specific instructions.";
+      instructionPlaceholder = "e.g., 'Make it more engaging', 'Add a section on company culture'";
+      break;
+    case 'casualMessage':
+      cardTitle = "Edit Casual Message";
+      cardDescription = "Adjust the AI-generated message. Use AI to enhance it or provide specific editing instructions.";
+      instructionPlaceholder = "e.g., 'Make it funnier', 'Add an emoji'";
+      break;
+    case 'applyToJob':
+      cardTitle = "Edit Application Email";
+      cardDescription = "Refine your AI-drafted application email. Use AI for general improvements or give specific instructions.";
+      instructionPlaceholder = "e.g., 'Emphasize my project management skills', 'Make the tone more confident'";
+      break;
+    case 'rewriteMessage':
+      cardTitle = "Edit Rewritten Text";
+      cardDescription = "Refine the AI-rewritten text. Use AI for general improvements or give specific instructions.";
+      instructionPlaceholder = "e.g., 'Make it sound more academic', 'Simplify the language'";
+      break;
   }
 
-  const instructionPlaceholder = `e.g., 'Make it more ${selectedMode === 'reply' || selectedMode === 'applyToJob' ? 'formal' : (selectedMode === 'jobPosting' ? 'engaging' : 'casual')}', 'Shorten it'`;
 
   return (
     <Card className="shadow-lg">
@@ -171,6 +183,7 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, s
           className="w-full sm:w-auto"
           onClick={handleCopyToClipboard}
           aria-label="Copy to Clipboard"
+          suppressHydrationWarning={true}
         >
           <Copy className="mr-2 h-4 w-4" />
           Copy to Clipboard

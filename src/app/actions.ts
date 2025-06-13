@@ -9,7 +9,7 @@ import { z } from "zod";
 // Schema for received email input / primary content input
 const PrimaryContentSchema = z.object({
   primaryContent: z.string().min(10, "Input content must be at least 10 characters long."),
-  selectedMode: z.enum(['reply', 'jobPosting', 'casualMessage', 'applyToJob'], {
+  selectedMode: z.enum(['reply', 'jobPosting', 'casualMessage', 'applyToJob', 'rewriteMessage'], {
     errorMap: () => ({ message: "Invalid mode selected." })
   }),
 });
@@ -29,7 +29,7 @@ const RefineWithInstructionSchema = z.object({
 export async function generateRepliesAction(prevState: any, formData: FormData) {
   const rawFormData = {
     primaryContent: formData.get("primaryContent") as string,
-    selectedMode: formData.get("selectedMode") as "reply" | "jobPosting" | "casualMessage" | "applyToJob",
+    selectedMode: formData.get("selectedMode") as "reply" | "jobPosting" | "casualMessage" | "applyToJob" | "rewriteMessage",
   };
 
   const validatedFields = PrimaryContentSchema.safeParse(rawFormData);

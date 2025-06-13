@@ -2,18 +2,18 @@
 "use client";
 
 import React, { type FC, useEffect } from 'react';
-import { useActionState } from 'react'; // Updated import
+import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { AlertTriangle, Loader2, Sparkles, MessagesSquare, Briefcase, Send } from "lucide-react";
+import { AlertTriangle, Loader2, Sparkles, MessagesSquare, Briefcase, Send, RefreshCw } from "lucide-react";
 import { generateRepliesAction } from '@/app/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-export type SelectedMode = "reply" | "jobPosting" | "casualMessage" | "applyToJob";
+export type SelectedMode = "reply" | "jobPosting" | "casualMessage" | "applyToJob" | "rewriteMessage";
 
 interface EmailInputSectionProps {
   selectedMode: SelectedMode;
@@ -59,6 +59,13 @@ const modeConfigs: Record<SelectedMode, ModeConfig> = {
     buttonText: "Generate Messages",
     icon: MessagesSquare,
   },
+  rewriteMessage: {
+    title: "Your Text to Rewrite",
+    description: "Paste any text you'd like the AI to rewrite for clarity, tone, or style.",
+    placeholder: "Paste the text you want to rewrite here...",
+    buttonText: "Rewrite Text",
+    icon: RefreshCw,
+  }
 };
 
 function SubmitButton({ mode }: { mode: SelectedMode }) {
@@ -128,6 +135,10 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="casualMessage" id="mode-casual" />
                 <Label htmlFor="mode-casual">Casual Message</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="rewriteMessage" id="mode-rewrite" />
+                <Label htmlFor="mode-rewrite">Rewrite Text</Label>
               </div>
             </RadioGroup>
           </div>
