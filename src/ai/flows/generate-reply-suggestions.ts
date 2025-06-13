@@ -16,8 +16,8 @@ import {z} from 'genkit';
 const GenerateReplySuggestionsInputSchema = z.object({
   emailContent: z.string().describe('The content of the email to reply to, job description details, casual message context, job posting to apply to, or text to rewrite.'),
   selectedMode: z.enum(['reply', 'jobPosting', 'casualMessage', 'applyToJob', 'rewriteMessage']).describe('The selected mode for generation.'),
-  tone: z.string().optional().describe('The desired tone or style for the message (e.g., formal, casual). Relevant for jobPosting and casualMessage modes.'),
-  charLimit: z.number().optional().describe('An approximate character limit for the generated message. Relevant for jobPosting and casualMessage modes.'),
+  tone: z.string().optional().describe('The desired tone or style for the message (e.g., formal, casual).'),
+  charLimit: z.number().optional().describe('An approximate character limit for the generated message.'),
 });
 export type GenerateReplySuggestionsInput = z.infer<typeof GenerateReplySuggestionsInputSchema>;
 
@@ -58,6 +58,8 @@ You are an AI assistant specialized in generating email reply suggestions.
 Based on the content of the received email, provide three different reply suggestions.
 Each suggestion should be concise and tailored to the email's content.
 The suggestions should vary in tone and approach to provide the user with multiple options.
+{{#if tone}}Please adopt the following tone characteristics: {{{tone}}}.{{/if}}
+{{#if charLimit}}Please try to keep each suggestion to approximately {{{charLimit}}} characters.{{/if}}
 
 Email Content: {{{emailContent}}}
 
@@ -67,7 +69,7 @@ You are an AI assistant specialized in crafting compelling job posting emails fo
 Based on the provided job description details, generate a complete draft for a job posting email.
 The email should be professional, engaging, and clearly outline the role, responsibilities, qualifications, and company culture (if provided).
 Include a clear call to action for interested candidates. If details are sparse, create a plausible and comprehensive job posting.
-{{#if tone}}Please adopt the following tone: {{{tone}}}.{{/if}}
+{{#if tone}}Please adopt the following tone characteristics: {{{tone}}}.{{/if}}
 {{#if charLimit}}Please try to keep the email to approximately {{{charLimit}}} characters.{{/if}}
 
 Job Description Details: {{{emailContent}}}
@@ -80,6 +82,8 @@ The email should highlight how a candidate might present themselves as suitable 
 Ensure the tone is enthusiastic and professional. Include placeholders like "[Your Name]", "[Your Address/Phone/Email]", "[Hiring Manager Name, if known, otherwise 'Hiring Team']", "[Company Name]", and "[Job Title mentioned in Posting]".
 Suggest a strong opening (expressing interest in the specific role) and a closing (e.g., expressing eagerness to discuss qualifications further).
 The goal is to create a strong template that the user can then personalize.
+{{#if tone}}Please adopt the following tone characteristics: {{{tone}}}.{{/if}}
+{{#if charLimit}}Please try to keep the email to approximately {{{charLimit}}} characters.{{/if}}
 
 Job Posting Content (provided by user): {{{emailContent}}}
 
@@ -88,7 +92,7 @@ Application Email Draft (provide as a single suggestion in the array):
 You are an AI assistant skilled at writing casual and semi-formal messages for platforms like Telegram or Messenger.
 Based on the user's input about the message context, generate three distinct message options.
 The messages should be friendly, concise, and appropriate for the described situation. Vary the tone slightly for each option.
-{{#if tone}}Please adopt the following tone: {{{tone}}}.{{/if}}
+{{#if tone}}Please adopt the following tone characteristics: {{{tone}}}.{{/if}}
 {{#if charLimit}}Please try to keep each message option to approximately {{{charLimit}}} characters.{{/if}}
 
 Message Context: {{{emailContent}}}
@@ -98,12 +102,16 @@ Message Options:
 You are an AI assistant skilled at rewriting and rephrasing text.
 The user will provide a piece of text. Your task is to rewrite it. You can aim to improve clarity, adjust the tone, make it more concise, or enhance its overall style.
 Provide one rewritten version of the text.
+{{#if tone}}Please adopt the following tone characteristics: {{{tone}}}.{{/if}}
+{{#if charLimit}}Please try to keep the rewritten text to approximately {{{charLimit}}} characters.{{/if}}
 
 Original Text: {{{emailContent}}}
 
 Rewritten Text (provide as a single suggestion in the array):
 {{else}}
 You are a helpful AI assistant. Please process the following input: {{{emailContent}}} for mode {{{selectedMode}}}.
+{{#if tone}}Please adopt the following tone characteristics: {{{tone}}}.{{/if}}
+{{#if charLimit}}Please try to keep the output to approximately {{{charLimit}}} characters.{{/if}}
 {{/if}}
   `, config: {
     safetySettings: [

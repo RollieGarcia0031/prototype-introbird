@@ -38,15 +38,15 @@ interface ModeConfig {
 const modeConfigs: Record<SelectedMode, ModeConfig> = {
   reply: {
     title: "Your Received Email",
-    description: "Paste the email you received below to get AI-powered reply suggestions.",
+    description: "Paste the email you received. Use advanced options for tone and length.",
     placeholder: "Paste the full email content here...",
     buttonText: "Generate Replies",
     icon: Sparkles,
-    hasToneAndLimitOptions: false,
+    hasToneAndLimitOptions: true, // Now true for all modes
   },
   jobPosting: {
     title: "Job Posting Details",
-    description: "Provide details about the job to draft a posting email. You can specify tone and character limit in the advanced options below.",
+    description: "Provide job details. Use advanced options for tone and length.",
     placeholder: "Enter job title, key responsibilities, required qualifications, company overview, benefits, etc.",
     buttonText: "Draft Job Posting Email",
     icon: Briefcase,
@@ -54,15 +54,15 @@ const modeConfigs: Record<SelectedMode, ModeConfig> = {
   },
   applyToJob: {
     title: "Apply to Job Posting",
-    description: "Paste the job posting you want to apply to. AI will help you draft an application email.",
+    description: "Paste the job posting. Use advanced options for tone and length.",
     placeholder: "Paste the full job posting text here...",
     buttonText: "Draft Application Email",
     icon: Send,
-    hasToneAndLimitOptions: false,
+    hasToneAndLimitOptions: true, // Now true for all modes
   },
   casualMessage: {
     title: "Casual Message Context",
-    description: "Describe the situation for your message. You can specify tone and character limit in the advanced options below.",
+    description: "Describe the situation. Use advanced options for tone and length.",
     placeholder: "E.g., 'Want to ask a friend to hang out this weekend', 'Need to congratulate a colleague on their promotion'",
     buttonText: "Generate Messages",
     icon: MessagesSquare,
@@ -70,11 +70,11 @@ const modeConfigs: Record<SelectedMode, ModeConfig> = {
   },
   rewriteMessage: {
     title: "Your Text to Rewrite",
-    description: "Paste any text you'd like the AI to rewrite for clarity, tone, or style.",
+    description: "Paste text to rewrite. Use advanced options for tone and length.",
     placeholder: "Paste the text you want to rewrite here...",
     buttonText: "Rewrite Text",
     icon: RefreshCw,
-    hasToneAndLimitOptions: false,
+    hasToneAndLimitOptions: true, // Now true for all modes
   }
 };
 
@@ -123,12 +123,12 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
     const primaryContent = formData.get("primaryContent") as string;
     setPrimaryInput(primaryContent);
     formData.set("selectedMode", selectedMode); // Ensure selectedMode is part of formData
-    if (modeConfigs[selectedMode].hasToneAndLimitOptions) {
-      if (selectedTones.length > 0) {
-        formData.set("tone", selectedTones.join(", "));
-      }
-      // charLimit is directly picked up by name="charLimit" on the Input
+    
+    if (selectedTones.length > 0) {
+      formData.set("tone", selectedTones.join(", "));
     }
+    // charLimit is directly picked up by name="charLimit" on the Input
+    
     formAction(formData);
   };
 
@@ -196,8 +196,8 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
             <input type="hidden" name="selectedMode" value={selectedMode} />
           </div>
           
-          {currentConfig.hasToneAndLimitOptions && (
-            <Accordion type="single" collapsible className="w-full" defaultValue="advanced-options">
+          {currentConfig.hasToneAndLimitOptions && ( // This condition will always be true now
+            <Accordion type="single" collapsible className="w-full"> {/* Removed defaultValue to make it collapsed by default */}
               <AccordionItem value="advanced-options">
                 <AccordionTrigger className="text-sm font-medium hover:no-underline">
                   Advanced Tone & Length Options
@@ -253,6 +253,4 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
 };
 
 export default EmailInputSection;
-    
-
     
