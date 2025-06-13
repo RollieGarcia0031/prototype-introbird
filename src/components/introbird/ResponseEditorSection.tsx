@@ -1,7 +1,8 @@
 // src/components/introbird/ResponseEditorSection.tsx
 "use client";
 
-import React, { type FC, useState, useEffect, useActionState } from 'react';
+import React, { type FC, useState, useEffect } from 'react';
+import { useActionState } from 'react'; // Updated import
 import { useFormStatus } from 'react-dom';
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -129,7 +130,7 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, s
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle className="font-headline text-2xl">{cardTitle}</CardTitle>
+        <CardTitle className="font-headline text-xl sm:text-2xl">{cardTitle}</CardTitle>
         <CardDescription>{cardDescription}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -179,7 +180,7 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, s
       <Separator className="my-6" />
 
       <CardHeader className="pt-0">
-        <CardTitle className="font-headline text-xl">Suggest Specific Edits</CardTitle>
+        <CardTitle className="font-headline text-lg sm:text-xl">Suggest Specific Edits</CardTitle>
         <CardDescription>
           Provide instructions for the AI to refine the draft above.
         </CardDescription>

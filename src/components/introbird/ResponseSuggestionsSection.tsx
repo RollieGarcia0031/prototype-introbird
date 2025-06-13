@@ -45,12 +45,12 @@ const ResponseSuggestionsSection: FC<ResponseSuggestionsSectionProps> = ({ sugge
 
   return (
     <div className="space-y-6">
-      <h2 className="font-headline text-2xl font-semibold text-center">{titleText}</h2>
+      <h2 className="font-headline text-xl sm:text-2xl font-semibold text-center">{titleText}</h2>
       <div className={`grid gap-6 ${suggestions.length === 1 && (selectedMode === 'jobPosting' || selectedMode === 'applyToJob') ? 'md:grid-cols-1' : 'md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3'}`}>
         {suggestions.map((suggestion, index) => (
           <Card key={index} className="shadow-md flex flex-col">
             <CardHeader>
-              <CardTitle className="font-headline text-lg">
+              <CardTitle className="font-headline text-base sm:text-lg">
                 {suggestions.length > 1 ? `Suggestion ${index + 1}` : 
                   (selectedMode === 'jobPosting' ? 'Job Posting Draft' : 
                   (selectedMode === 'applyToJob' ? 'Application Email Draft' : 'Suggestion'))}

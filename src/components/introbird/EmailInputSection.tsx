@@ -1,7 +1,8 @@
 // src/components/introbird/EmailInputSection.tsx
 "use client";
 
-import React, { type FC, useActionState, useEffect } from 'react';
+import React, { type FC, useEffect } from 'react';
+import { useActionState } from 'react'; // Updated import
 import { useFormStatus } from 'react-dom';
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -99,7 +100,7 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle className="font-headline text-2xl">{currentConfig.title}</CardTitle>
+        <CardTitle className="font-headline text-xl sm:text-2xl">{currentConfig.title}</CardTitle>
         <CardDescription>{currentConfig.description}</CardDescription>
       </CardHeader>
       <CardContent>
