@@ -1,7 +1,8 @@
+
 // src/components/introbird/EmailInputSection.tsx
 "use client";
 
-import React, { type FC, useEffect } from 'react';
+import React, { type FC, useEffect, useState } from 'react';
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Textarea } from "@/components/ui/textarea";
@@ -30,7 +31,7 @@ interface ModeConfig {
   placeholder: string;
   buttonText: string;
   icon: React.ElementType;
-  hasToneAndLimitOptions?: boolean;
+  hasToneAndLimitOptions: boolean;
 }
 
 const modeConfigs: Record<SelectedMode, ModeConfig> = {
@@ -40,6 +41,7 @@ const modeConfigs: Record<SelectedMode, ModeConfig> = {
     placeholder: "Paste the full email content here...",
     buttonText: "Generate Replies",
     icon: Sparkles,
+    hasToneAndLimitOptions: false,
   },
   jobPosting: {
     title: "Job Posting Details",
@@ -55,6 +57,7 @@ const modeConfigs: Record<SelectedMode, ModeConfig> = {
     placeholder: "Paste the full job posting text here...",
     buttonText: "Draft Application Email",
     icon: Send,
+    hasToneAndLimitOptions: false,
   },
   casualMessage: {
     title: "Casual Message Context",
@@ -70,6 +73,7 @@ const modeConfigs: Record<SelectedMode, ModeConfig> = {
     placeholder: "Paste the text you want to rewrite here...",
     buttonText: "Rewrite Text",
     icon: RefreshCw,
+    hasToneAndLimitOptions: false,
   }
 };
 
@@ -111,6 +115,7 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
       if (selectedTone) {
         formData.set("tone", selectedTone);
       }
+      // charLimit is directly picked up by name="charLimit" on the Input
     }
     formAction(formData);
   };
@@ -225,3 +230,4 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
 };
 
 export default EmailInputSection;
+    
