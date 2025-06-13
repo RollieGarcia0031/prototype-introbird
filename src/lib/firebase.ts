@@ -1,7 +1,7 @@
 // src/lib/firebase.ts
-import { initializeApp, getApp, getApps } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApp, getApps, type FirebaseApp } from 'firebase/app';
+import { getAuth, type Auth } from 'firebase/auth';
+import { getFirestore, doc, setDoc, getDoc, type Firestore } from 'firebase/firestore';
 
 // Ensure your .env.local file has these variables defined.
 // Example .env.local:
@@ -22,33 +22,37 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const db = getFirestore(app); // Firestore instance, can be used later for saving user data
+let app: FirebaseApp;
+let auth: Auth;
+let db: Firestore;
 
-export { app, auth, db };
-
-// For server-side Firebase (e.g., using Firebase Admin SDK in server actions or API routes):
-/*
-import admin from 'firebase-admin';
-
-if (!admin.apps.length) {
-  try {
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID, // Note: Server-side env vars don't need NEXT_PUBLIC_
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
-      // databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}.firebaseio.com` // if using Realtime Database
-    });
-  } catch (error) {
-    console.error('Firebase admin initialization error', error);
-  }
+if (!getApps().length) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApp();
 }
 
-const adminDb = admin.firestore();
-// const adminAuth = admin.auth();
+auth = getAuth(app);
+db = getFirestore(app);
 
-export { adminDb, adminAuth };
-*/
+// Firestore helper functions for user customization data
+const USER_CUSTOMIZATION_COLLECTION = "Introbird_users";
+
+export async function saveUserCustomization(userId: string, customizationText: string): Promise<void> {
+  if (!userId) throw new Error("User ID is required to save customization data.");
+  const userDocRef = doc(db, USER_CUSTOMIZATION_COLLECTION, userId);
+  await setDoc(userDocRef, { customizationText }, { merge: true }); // merge: true to avoid overwriting other fields if any
+}
+
+export async function getUserCustomization(userId: string): Promise<string | null> {
+  if (!userId) throw new Error("User ID is required to get customization data.");
+  const userDocRef = doc(db, USER_CUSTOMIZATION_COLLECTION, userId);
+  const docSnap = await getDoc(userDocRef);
+  if (docSnap.exists()) {
+    return docSnap.data()?.customizationText || null;
+  }
+  return null;
+}
+
+
+export { app, auth, db };

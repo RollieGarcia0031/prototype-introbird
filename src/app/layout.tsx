@@ -16,12 +16,13 @@ import {
 } from "@/components/ui/sidebar";
 import AppHeader from '@/components/introbird/AppHeader';
 import { Settings, Palette as CustomizationIcon, Loader2 } from "lucide-react";
-import React from 'react'; // Removed useState as it's handled by AuthContext
+import React from 'react';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
-// RootLayoutContent is the part of your layout that needs access to the AuthContext
+
 const RootLayoutContent = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth(); // Get user and loading state from AuthContext
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -46,12 +47,16 @@ const RootLayoutContent = ({ children }: { children: React.ReactNode }) => {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton 
-                tooltip={!user ? "Login to customize" : "Customization"} 
-                disabled={!user} // Disable if user is null (not logged in)
+               <SidebarMenuButton
+                asChild
+                tooltip={!user ? "Login to customize" : "Customization"}
+                disabled={!user || loading}
+                aria-disabled={!user || loading}
               >
-                <CustomizationIcon />
-                <span className="group-data-[state=collapsed]:hidden">Customization</span>
+                <Link href="/customization">
+                  <CustomizationIcon />
+                  <span className="group-data-[state=collapsed]:hidden">Customization</span>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
