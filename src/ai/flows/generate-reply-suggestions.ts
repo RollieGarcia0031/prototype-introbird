@@ -18,6 +18,7 @@ const GenerateReplySuggestionsInputSchema = z.object({
   selectedMode: z.enum(['reply', 'jobPosting', 'casualMessage', 'applyToJob', 'rewriteMessage']).describe('The selected mode for generation.'),
   tone: z.string().optional().describe('The desired tone or style for the message (e.g., formal, casual).'),
   charLimit: z.number().optional().describe('An approximate character limit for the generated message.'),
+  selectedModel: z.string().optional().describe('The AI model to use for generation.'),
 });
 export type GenerateReplySuggestionsInput = z.infer<typeof GenerateReplySuggestionsInputSchema>;
 
@@ -159,9 +160,11 @@ const generateReplySuggestionsFlow = ai.defineFlow(
       charLimit: flowInput.charLimit,
     };
 
+    const promptOptions = flowInput.selectedModel ? { model: flowInput.selectedModel } : {};
+
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
-        const {output} = await prompt(promptPayload);
+        const {output} = await prompt(promptPayload, promptOptions);
         if ((flowInput.selectedMode === 'jobPosting' || flowInput.selectedMode === 'applyToJob' || flowInput.selectedMode === 'rewriteMessage') && output && output.suggestions.length > 0 && typeof output.suggestions[0] === 'string') {
             // The prompt now explicitly asks for it to be a single suggestion in the array for these modes.
         }
@@ -180,4 +183,3 @@ const generateReplySuggestionsFlow = ai.defineFlow(
     throw new Error('Failed to generate reply suggestions after multiple retries.');
   }
 );
-

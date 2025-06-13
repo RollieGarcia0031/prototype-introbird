@@ -19,6 +19,7 @@ import { Separator } from '../ui/separator';
 interface ResponseEditorSectionProps {
   initialReply: string;
   selectedMode: SelectedMode;
+  selectedAiModel: string;
 }
 
 function ImproveButton() {
@@ -55,7 +56,7 @@ function RefineWithInstructionButton() {
   );
 }
 
-const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, selectedMode }) => {
+const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, selectedMode, selectedAiModel }) => {
   const [currentReply, setCurrentReply] = useState(initialReply);
   const [editInstruction, setEditInstruction] = useState("");
   const { toast } = useToast();
@@ -93,12 +94,14 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, s
 
   const handleImproveSubmit = (formData: FormData) => {
     formData.set('draft', currentReply);
+    formData.set('selectedModel', selectedAiModel);
     improveFormAction(formData);
   };
   
   const handleRefineWithInstructionSubmit = (formData: FormData) => {
     formData.set('currentDraft', currentReply);
     formData.set('instruction', editInstruction);
+    formData.set('selectedModel', selectedAiModel);
     refineWithInstructionFormAction(formData);
   };
 
@@ -177,6 +180,7 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, s
       <CardFooter className="flex flex-col sm:flex-row justify-between gap-2">
         <form action={handleImproveSubmit} className="w-full sm:w-auto">
            <input type="hidden" name="draft" value={currentReply} />
+           <input type="hidden" name="selectedModel" value={selectedAiModel} />
            <ImproveButton />
         </form>
         <Button
@@ -213,6 +217,7 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, s
                     className="min-h-[70px] resize-y"
                 />
                 <input type="hidden" name="currentDraft" value={currentReply} />
+                <input type="hidden" name="selectedModel" value={selectedAiModel} />
             </div>
             <div className="flex justify-end">
                 <RefineWithInstructionButton />
@@ -224,4 +229,3 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, s
 };
 
 export default ResponseEditorSection;
-

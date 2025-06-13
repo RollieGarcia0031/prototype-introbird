@@ -1,3 +1,4 @@
+
 // src/app/page.tsx
 "use client";
 
@@ -8,12 +9,15 @@ import ResponseSuggestionsSection from '@/components/introbird/ResponseSuggestio
 import ResponseEditorSection from '@/components/introbird/ResponseEditorSection';
 import { Separator } from '@/components/ui/separator';
 import type { SelectedMode } from '@/components/introbird/EmailInputSection'; // Import the type
+import { AVAILABLE_MODELS } from '@/ai/genkit';
 
 export default function IntroBirdPage() {
   const [receivedEmail, setReceivedEmail] = useState<string>(""); // Represents the main text input, context varies by mode
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [currentReply, setCurrentReply] = useState<string>("");
   const [selectedMode, setSelectedMode] = useState<SelectedMode>("reply"); // Default mode
+  const [selectedAiModel, setSelectedAiModel] = useState<string>(AVAILABLE_MODELS.GEMINI_FLASH);
+
 
   const handleSuggestionsGenerated = (newSuggestions: string[]) => {
     setSuggestions(newSuggestions);
@@ -37,6 +41,8 @@ export default function IntroBirdPage() {
           setSelectedMode={setSelectedMode}
           onSuggestionsGenerated={handleSuggestionsGenerated}
           setPrimaryInput={setReceivedEmail} // Renamed prop for clarity
+          selectedAiModel={selectedAiModel}
+          setSelectedAiModel={setSelectedAiModel}
         />
 
         {suggestions.length > 0 && (
@@ -57,6 +63,7 @@ export default function IntroBirdPage() {
               <ResponseEditorSection
                 initialReply={currentReply}
                 selectedMode={selectedMode}
+                selectedAiModel={selectedAiModel}
               />
             </div>
           </>
@@ -64,8 +71,9 @@ export default function IntroBirdPage() {
       </main>
       <footer className="py-8 text-center text-muted-foreground text-sm">
         <p>&copy; {new Date().getFullYear()} IntroBird. All rights reserved.</p>
-        <p className="mt-1">Note: AI model selection (Gemini/GPT) is a planned feature. Currently uses default Genkit AI model.</p>
+        {/* <p className="mt-1">Note: OpenAI models require an API key to be configured in the environment.</p> */}
       </footer>
     </div>
   );
 }
+

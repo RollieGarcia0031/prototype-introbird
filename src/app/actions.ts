@@ -1,3 +1,4 @@
+
 // src/app/actions.ts
 "use server";
 
@@ -14,17 +15,20 @@ const PrimaryContentSchema = z.object({
   }),
   tone: z.string().optional(),
   charLimit: z.coerce.number().positive("Character limit must be a positive number.").optional(),
+  selectedModel: z.string().optional(),
 });
 
 // Schema for reply draft input (used by general "Improve" action)
 const ReplyDraftSchema = z.object({
   draft: z.string().min(5, "Draft must be at least 5 characters long."),
+  selectedModel: z.string().optional(),
 });
 
 // Schema for refining draft with instruction
 const RefineWithInstructionSchema = z.object({
   currentDraft: z.string().min(5, "Current draft must be at least 5 characters long."),
   instruction: z.string().min(3, "Instruction must be at least 3 characters long."),
+  selectedModel: z.string().optional(),
 });
 
 
@@ -32,8 +36,9 @@ export async function generateRepliesAction(prevState: any, formData: FormData) 
   const rawFormData = {
     primaryContent: formData.get("primaryContent") as string,
     selectedMode: formData.get("selectedMode") as "reply" | "jobPosting" | "casualMessage" | "applyToJob" | "rewriteMessage",
-    tone: formData.get("tone") as string || undefined, // Handle empty string from FormData
+    tone: formData.get("tone") as string || undefined,
     charLimit: formData.get("charLimit") ? Number(formData.get("charLimit")) : undefined,
+    selectedModel: formData.get("selectedModel") as string || undefined,
   };
   
   const validatedFields = PrimaryContentSchema.safeParse(rawFormData);
@@ -45,7 +50,7 @@ export async function generateRepliesAction(prevState: any, formData: FormData) 
     };
   }
   
-  const { primaryContent, selectedMode, tone, charLimit } = validatedFields.data;
+  const { primaryContent, selectedMode, tone, charLimit, selectedModel } = validatedFields.data;
 
   try {
     const result = await generateReplySuggestions({ 
@@ -53,6 +58,7 @@ export async function generateRepliesAction(prevState: any, formData: FormData) 
       selectedMode: selectedMode,
       tone: tone,
       charLimit: charLimit,
+      selectedModel: selectedModel,
     });
     return { suggestions: result.suggestions, error: null };
   } catch (error) {
@@ -65,6 +71,7 @@ export async function generateRepliesAction(prevState: any, formData: FormData) 
 export async function improveDraftAction(prevState: any, formData: FormData) {
    const rawFormData = {
     draft: formData.get("draft") as string,
+    selectedModel: formData.get("selectedModel") as string || undefined,
   };
   
   const validatedFields = ReplyDraftSchema.safeParse(rawFormData);
@@ -75,9 +82,11 @@ export async function improveDraftAction(prevState: any, formData: FormData) {
       refinedDraft: null,
     };
   }
+  
+  const { draft, selectedModel } = validatedFields.data;
 
   try {
-    const result = await improveReplyDraft({ draft: validatedFields.data.draft });
+    const result = await improveReplyDraft({ draft, selectedModel });
     return { refinedDraft: result.refinedDraft, error: null };
   } catch (error) {
     console.error("Error improving draft:", error);
@@ -90,6 +99,7 @@ export async function refineWithInstructionAction(prevState: any, formData: Form
   const rawFormData = {
     currentDraft: formData.get("currentDraft") as string,
     instruction: formData.get("instruction") as string,
+    selectedModel: formData.get("selectedModel") as string || undefined,
   };
 
   const validatedFields = RefineWithInstructionSchema.safeParse(rawFormData);
@@ -100,11 +110,14 @@ export async function refineWithInstructionAction(prevState: any, formData: Form
       refinedDraft: null,
     };
   }
+  
+  const { currentDraft, instruction, selectedModel } = validatedFields.data;
 
   try {
     const result = await refineDraftWithInstruction({ 
-      currentDraft: validatedFields.data.currentDraft,
-      instruction: validatedFields.data.instruction 
+      currentDraft,
+      instruction,
+      selectedModel, 
     });
     return { refinedDraft: result.refinedDraft, error: null };
   } catch (error) {
@@ -113,4 +126,3 @@ export async function refineWithInstructionAction(prevState: any, formData: Form
     return { error: `Failed to refine draft: ${errorMessage}. Please try again.`, refinedDraft: null };
   }
 }
-

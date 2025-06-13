@@ -1,3 +1,4 @@
+
 // src/ai/flows/refine-draft-with-instruction.ts
 'use server';
 /**
@@ -18,6 +19,7 @@ const RefineDraftWithInstructionInputSchema = z.object({
   instruction: z
     .string()
     .describe('The user_s specific instruction on how to modify the draft.'),
+  selectedModel: z.string().optional().describe('The AI model to use for refinement.'),
 });
 export type RefineDraftWithInstructionInput = z.infer<typeof RefineDraftWithInstructionInputSchema>;
 
@@ -32,7 +34,7 @@ export async function refineDraftWithInstruction(input: RefineDraftWithInstructi
 
 const prompt = ai.definePrompt({
   name: 'refineDraftWithInstructionPrompt',
-  input: {schema: RefineDraftWithInstructionInputSchema},
+  input: {schema: RefineDraftWithInstructionInputSchema.omit({ selectedModel: true })}, // Omit selectedModel for prompt's direct input
   output: {schema: RefineDraftWithInstructionOutputSchema},
   prompt: `You are an AI assistant specialized in refining email drafts based on specific user instructions.
       You will be given an existing draft and a user's instruction on how to change it.
@@ -57,10 +59,13 @@ const refineDraftWithInstructionFlow = ai.defineFlow(
     inputSchema: RefineDraftWithInstructionInputSchema,
     outputSchema: RefineDraftWithInstructionOutputSchema,
   },
-  async input => {
+  async (flowInput) => {
+    const promptPayload = { currentDraft: flowInput.currentDraft, instruction: flowInput.instruction };
+    const promptOptions = flowInput.selectedModel ? { model: flowInput.selectedModel } : {};
+
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
-        const {output} = await prompt(input);
+        const {output} = await prompt(promptPayload, promptOptions);
         return output!; // Success
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);

@@ -12,10 +12,12 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AlertTriangle, Loader2, Sparkles, MessagesSquare, Briefcase, Send, RefreshCw, Search } from "lucide-react"; // Added Search for Casual Inquiry
+import { AlertTriangle, Loader2, Sparkles, Briefcase, Send, RefreshCw, Search } from "lucide-react"; 
 import { generateRepliesAction } from '@/app/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AVAILABLE_MODELS } from '@/ai/genkit';
 
 export type SelectedMode = "reply" | "jobPosting" | "casualMessage" | "applyToJob" | "rewriteMessage";
 
@@ -24,6 +26,8 @@ interface EmailInputSectionProps {
   setSelectedMode: (mode: SelectedMode) => void;
   onSuggestionsGenerated: (suggestions: string[]) => void;
   setPrimaryInput: (text: string) => void;
+  selectedAiModel: string;
+  setSelectedAiModel: (model: string) => void;
 }
 
 interface ModeConfig {
@@ -65,7 +69,7 @@ const modeConfigs: Record<SelectedMode, ModeConfig> = {
     description: "You are an applicant. Paste a job description to draft a casual networking message or inquiry.",
     placeholder: "Paste the full job description here to draft a casual inquiry or networking message...",
     buttonText: "Draft Casual Inquiry",
-    icon: Search, // Changed icon
+    icon: Search, 
     hasToneAndLimitOptions: true,
   },
   rewriteMessage: {
@@ -108,7 +112,14 @@ function SubmitButton({ mode }: { mode: SelectedMode }) {
   );
 }
 
-const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelectedMode, onSuggestionsGenerated, setPrimaryInput }) => {
+const EmailInputSection: FC<EmailInputSectionProps> = ({ 
+  selectedMode, 
+  setSelectedMode, 
+  onSuggestionsGenerated, 
+  setPrimaryInput,
+  selectedAiModel,
+  setSelectedAiModel 
+}) => {
   const initialState = { suggestions: [], error: null };
   const [state, formAction] = useActionState(generateRepliesAction, initialState);
   const [selectedTones, setSelectedTones] = useState<string[]>([]);
@@ -123,6 +134,7 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
     const primaryContent = formData.get("primaryContent") as string;
     setPrimaryInput(primaryContent);
     formData.set("selectedMode", selectedMode);
+    formData.set("selectedModel", selectedAiModel);
     
     if (selectedTones.length > 0) {
       formData.set("tone", selectedTones.join(", "));
@@ -147,38 +159,52 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
       </CardHeader>
       <CardContent>
         <form action={handleFormAction} className="space-y-6">
-          <div>
-            <Label htmlFor="modeSelection" className="text-base font-medium">Select Mode:</Label>
-            <RadioGroup
-              id="modeSelection"
-              value={selectedMode}
-              onValueChange={(value) => {
-                setSelectedMode(value as SelectedMode);
-                setSelectedTones([]); 
-              }}
-              className="flex flex-col sm:flex-row flex-wrap gap-4 mt-2"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="reply" id="mode-reply" />
-                <Label htmlFor="mode-reply">Reply to Email</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="jobPosting" id="mode-job-posting" />
-                <Label htmlFor="mode-job-posting">Draft Job Posting</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="applyToJob" id="mode-apply-job" />
-                <Label htmlFor="mode-apply-job">Apply to Job</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="casualMessage" id="mode-casual" />
-                <Label htmlFor="mode-casual">Casual Job Inquiry</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="rewriteMessage" id="mode-rewrite" />
-                <Label htmlFor="mode-rewrite">Rewrite Text</Label>
-              </div>
-            </RadioGroup>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="modeSelection" className="text-base font-medium">Select Mode:</Label>
+              <RadioGroup
+                id="modeSelection"
+                value={selectedMode}
+                onValueChange={(value) => {
+                  setSelectedMode(value as SelectedMode);
+                  setSelectedTones([]); 
+                }}
+                className="flex flex-col sm:flex-row flex-wrap gap-x-4 gap-y-2 mt-2"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="reply" id="mode-reply" />
+                  <Label htmlFor="mode-reply">Reply to Email</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="jobPosting" id="mode-job-posting" />
+                  <Label htmlFor="mode-job-posting">Draft Job Posting</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="applyToJob" id="mode-apply-job" />
+                  <Label htmlFor="mode-apply-job">Apply to Job</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="casualMessage" id="mode-casual" />
+                  <Label htmlFor="mode-casual">Casual Job Inquiry</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="rewriteMessage" id="mode-rewrite" />
+                  <Label htmlFor="mode-rewrite">Rewrite Text</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            <div>
+              <Label htmlFor="aiModelSelection" className="text-base font-medium">Select AI Model:</Label>
+              <Select value={selectedAiModel} onValueChange={setSelectedAiModel}>
+                <SelectTrigger id="aiModelSelection" className="mt-2">
+                  <SelectValue placeholder="Select AI Model" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={AVAILABLE_MODELS.GEMINI_FLASH}>Gemini Flash (Default)</SelectItem>
+                  {/* <SelectItem value={AVAILABLE_MODELS.OPENAI_GPT4O_MINI}>OpenAI GPT-4o Mini</SelectItem> */}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div>
@@ -192,6 +218,7 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
               required
             />
             <input type="hidden" name="selectedMode" value={selectedMode} />
+            <input type="hidden" name="selectedModel" value={selectedAiModel} />
           </div>
           
           {currentConfig.hasToneAndLimitOptions && (
@@ -251,4 +278,4 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({ selectedMode, setSelect
 };
 
 export default EmailInputSection;
-    
+
