@@ -1,8 +1,8 @@
 // src/components/introbird/ResponseEditorSection.tsx
 "use client";
 
-import React, { type FC, useState, useEffect } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import React, { type FC, useState, useEffect, useActionState } from 'react'; // Added useActionState
+import { useFormStatus } from 'react-dom'; // Removed useFormState
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,10 +42,10 @@ const ResponseEditorSection: FC<ResponseEditorSectionProps> = ({ initialReply, r
   const { toast } = useToast();
 
   const improveInitialState = { refinedDraft: null, error: null };
-  const [improveState, improveFormAction] = useFormState(improveDraftAction, improveInitialState);
+  const [improveState, improveFormAction] = useActionState(improveDraftAction, improveInitialState); // Changed to useActionState
   
   const saveInitialState = { success: false, error: null };
-  const [saveState, saveFormAction] = useFormState(saveInteractionAction, saveInitialState);
+  const [saveState, saveFormAction] = useActionState(saveInteractionAction, saveInitialState); // Changed to useActionState
 
   useEffect(() => {
     setCurrentReply(initialReply);

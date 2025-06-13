@@ -1,8 +1,8 @@
 // src/components/introbird/EmailInputSection.tsx
 "use client";
 
-import React, { type FC } from 'react'; // Added React import
-import { useFormState, useFormStatus } from 'react-dom';
+import React, { type FC, useActionState } from 'react'; // Added useActionState
+import { useFormStatus } from 'react-dom'; // Removed useFormState
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +28,7 @@ function SubmitButton() {
 
 const EmailInputSection: FC<EmailInputSectionProps> = ({ onSuggestionsGenerated, setReceivedEmail }) => {
   const initialState = { suggestions: [], error: null };
-  const [state, formAction] = useFormState(generateRepliesAction, initialState);
+  const [state, formAction] = useActionState(generateRepliesAction, initialState); // Changed to useActionState
 
   const handleFormAction = (formData: FormData) => {
     const emailContent = formData.get("emailContent") as string;
