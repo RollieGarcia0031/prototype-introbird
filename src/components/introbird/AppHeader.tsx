@@ -1,14 +1,18 @@
+
 // src/components/introbird/AppHeader.tsx
 "use client";
 
 import type { FC } from 'react';
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { LogIn } from "lucide-react";
+import { LogIn, LogOut } from "lucide-react"; // Import LogOut
 
-interface AppHeaderProps {}
+interface AppHeaderProps {
+  isLoggedIn: boolean;
+  onLoginToggle: () => void;
+}
 
-const AppHeader: FC<AppHeaderProps> = () => {
+const AppHeader: FC<AppHeaderProps> = ({ isLoggedIn, onLoginToggle }) => {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -21,9 +25,18 @@ const AppHeader: FC<AppHeaderProps> = () => {
             </p>
           </div>
         </div>
-        <Button variant="outline">
-          <LogIn className="mr-2 h-4 w-4" />
-          Login
+        <Button variant="outline" onClick={onLoginToggle}>
+          {isLoggedIn ? (
+            <>
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </>
+          ) : (
+            <>
+              <LogIn className="mr-2 h-4 w-4" />
+              Login
+            </>
+          )}
         </Button>
       </div>
     </header>
