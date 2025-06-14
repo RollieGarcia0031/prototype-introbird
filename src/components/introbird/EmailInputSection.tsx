@@ -18,6 +18,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AVAILABLE_MODELS } from '@/ai/model-definitions';
+import { useAuth } from '@/contexts/AuthContext'; // Added
 
 export type SelectedMode = "reply" | "jobPosting" | "casualMessage" | "applyToJob" | "rewriteMessage";
 
@@ -120,6 +121,7 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({
   selectedAiModel,
   setSelectedAiModel 
 }) => {
+  const { user } = useAuth(); // Added
   const initialState = { suggestions: [], error: null };
   const [state, formAction] = useActionState(generateRepliesAction, initialState);
   const [selectedTones, setSelectedTones] = useState<string[]>([]);
@@ -138,6 +140,10 @@ const EmailInputSection: FC<EmailInputSectionProps> = ({
     
     if (selectedTones.length > 0) {
       formData.set("tone", selectedTones.join(", "));
+    }
+
+    if (user?.uid) { // Added: Pass userId if user is logged in
+      formData.set("userId", user.uid);
     }
     
     formAction(formData);

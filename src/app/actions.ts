@@ -2,7 +2,7 @@
 // src/app/actions.ts
 "use server";
 
-import { generateReplySuggestions } from "@/ai/flows/generate-reply-suggestions";
+import { generateReplySuggestions, type GenerateReplySuggestionsInput } from "@/ai/flows/generate-reply-suggestions";
 import { improveReplyDraft } from "@/ai/flows/improve-reply-draft";
 import { refineDraftWithInstruction } from "@/ai/flows/refine-draft-with-instruction";
 import { z } from "zod";
@@ -16,6 +16,7 @@ const PrimaryContentSchema = z.object({
   tone: z.string().optional(),
   charLimit: z.coerce.number().positive("Character limit must be a positive number.").optional(),
   selectedModel: z.string().optional(),
+  userId: z.string().optional(), // Added userId
 });
 
 // Schema for reply draft input (used by general "Improve" action)
@@ -39,6 +40,7 @@ export async function generateRepliesAction(prevState: any, formData: FormData) 
     tone: formData.get("tone") as string || undefined,
     charLimit: formData.get("charLimit") ? Number(formData.get("charLimit")) : undefined,
     selectedModel: formData.get("selectedModel") as string || undefined,
+    userId: formData.get("userId") as string || undefined, // Added userId
   };
   
   const validatedFields = PrimaryContentSchema.safeParse(rawFormData);
@@ -50,16 +52,18 @@ export async function generateRepliesAction(prevState: any, formData: FormData) 
     };
   }
   
-  const { primaryContent, selectedMode, tone, charLimit, selectedModel } = validatedFields.data;
+  const { primaryContent, selectedMode, tone, charLimit, selectedModel, userId } = validatedFields.data;
 
   try {
-    const result = await generateReplySuggestions({ 
+    const flowInput: GenerateReplySuggestionsInput = { 
       emailContent: primaryContent, 
       selectedMode: selectedMode,
       tone: tone,
       charLimit: charLimit,
       selectedModel: selectedModel,
-    });
+      userId: userId, // Pass userId to the flow
+    };
+    const result = await generateReplySuggestions(flowInput);
     return { suggestions: result.suggestions, error: null };
   } catch (error) {
     console.error("Error generating suggestions:", error);
@@ -126,3 +130,4 @@ export async function refineWithInstructionAction(prevState: any, formData: Form
     return { error: `Failed to refine draft: ${errorMessage}. Please try again.`, refinedDraft: null };
   }
 }
+
