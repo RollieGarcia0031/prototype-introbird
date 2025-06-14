@@ -30,31 +30,43 @@ db = getFirestore(app);
 // Firestore helper functions for user customization data
 const USER_CUSTOMIZATION_COLLECTION = "Introbird_users";
 
-export async function saveUserCustomization(userId: string, customizationText: string, resumeSummary?: string): Promise<void> {
+export interface UserCustomizationData {
+  customizationText?: string;
+  resumeSummary?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  address?: string;
+  updatedAt?: Date;
+}
+
+export async function saveUserCustomization(userId: string, data: Partial<UserCustomizationData>): Promise<void> {
   if (!userId) throw new Error("User ID is required to save customization data.");
   const userDocRef = doc(db, USER_CUSTOMIZATION_COLLECTION, userId);
-  const dataToSave: { customizationText: string; resumeSummary?: string, updatedAt?: Date } = { 
-    customizationText,
+  const dataToSave = { 
+    ...data,
     updatedAt: new Date()
    };
-  if (resumeSummary !== undefined) {
-    dataToSave.resumeSummary = resumeSummary;
-  }
   await setDoc(userDocRef, dataToSave, { merge: true });
 }
 
-export async function getUserCustomization(userId: string): Promise<{ customizationText: string | null; resumeSummary: string | null }> {
+export async function getUserCustomization(userId: string): Promise<UserCustomizationData | null> {
   if (!userId) throw new Error("User ID is required to get customization data.");
   const userDocRef = doc(db, USER_CUSTOMIZATION_COLLECTION, userId);
   const docSnap = await getDoc(userDocRef);
   if (docSnap.exists()) {
     const data = docSnap.data();
     return {
-      customizationText: data?.customizationText || null,
-      resumeSummary: data?.resumeSummary || null
+      customizationText: data?.customizationText || '',
+      resumeSummary: data?.resumeSummary || '',
+      firstName: data?.firstName || '',
+      lastName: data?.lastName || '',
+      email: data?.email || '',
+      address: data?.address || '',
+      updatedAt: data?.updatedAt?.toDate() || null,
     };
   }
-  return { customizationText: null, resumeSummary: null };
+  return null;
 }
 
 export async function updateUserProfileName(authService: Auth, newName: string): Promise<void> {

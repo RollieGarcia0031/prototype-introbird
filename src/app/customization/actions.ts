@@ -2,11 +2,15 @@
 "use server";
 
 import { z } from "zod";
-import { saveUserCustomization } from "@/lib/firebase";
-import { summarizeResumeFlow } from "@/ai/flows/summarize-resume-flow"; // Will be created
+import { saveUserCustomization, type UserCustomizationData } from "@/lib/firebase";
+import { summarizeResumeFlow } from "@/ai/flows/summarize-resume-flow"; 
 
 const CustomizationSchema = z.object({
   userId: z.string().min(1, "User ID is required."),
+  firstName: z.string().max(100, "First name cannot exceed 100 characters.").optional(),
+  lastName: z.string().max(100, "Last name cannot exceed 100 characters.").optional(),
+  email: z.string().email({ message: "Invalid email address." }).max(200, "Email cannot exceed 200 characters.").optional().or(z.literal('')), // Allow empty string
+  address: z.string().max(500, "Address cannot exceed 500 characters.").optional(),
   customizationText: z.string().max(5000, "Customization text cannot exceed 5000 characters.").optional(),
   resumeSummaryText: z.string().max(10000, "Resume summary cannot exceed 10000 characters.").optional(),
 });
@@ -20,6 +24,10 @@ interface SaveCustomizationState {
 export async function saveCustomizationAction(prevState: SaveCustomizationState, formData: FormData): Promise<SaveCustomizationState> {
   const rawFormData = {
     userId: formData.get("userId") as string,
+    firstName: formData.get("firstName") as string,
+    lastName: formData.get("lastName") as string,
+    email: formData.get("email") as string,
+    address: formData.get("address") as string,
     customizationText: formData.get("customizationText") as string,
     resumeSummaryText: formData.get("resumeSummaryText") as string,
   };
@@ -33,13 +41,23 @@ export async function saveCustomizationAction(prevState: SaveCustomizationState,
     };
   }
 
-  const { userId, customizationText, resumeSummaryText } = validatedFields.data;
+  const { userId, firstName, lastName, email, address, customizationText, resumeSummaryText } = validatedFields.data;
 
   try {
     if (!userId) {
         throw new Error("User ID was not provided or is invalid.");
     }
-    await saveUserCustomization(userId, customizationText ?? "", resumeSummaryText ?? "");
+    
+    const dataToSave: Partial<UserCustomizationData> = {
+      firstName: firstName ?? "",
+      lastName: lastName ?? "",
+      email: email ?? "",
+      address: address ?? "",
+      customizationText: customizationText ?? "",
+      resumeSummary: resumeSummaryText ?? ""
+    };
+    
+    await saveUserCustomization(userId, dataToSave);
     return { message: "Your customization data has been saved successfully!", success: true };
   } catch (error) {
     console.error("Error saving customization data:", error);
@@ -52,7 +70,6 @@ const SummarizeResumeSchema = z.object({
   resumePdfDataUri: z.string()
     .startsWith('data:application/pdf;base64,', { message: "Invalid PDF data URI format." })
     .describe("The PDF resume encoded as a Base64 data URI."),
-  // userId is not strictly needed by the flow but good for validation/logging if ever
   userId: z.string().min(1, "User ID is required for resume processing."),
 });
 

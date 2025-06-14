@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save, UploadCloud, FileText, AlertTriangleIcon } from 'lucide-react';
+import { Loader2, Save, UploadCloud, FileText, AlertTriangleIcon, UserCircle2 } from 'lucide-react';
 import { getUserCustomization } from '@/lib/firebase'; 
 import { saveCustomizationAction, summarizeResumeAction } from './actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -34,6 +34,10 @@ export default function CustomizationPage() {
   const router = useRouter();
   const { toast } = useToast();
 
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [address, setAddress] = useState('');
   const [customizationText, setCustomizationText] = useState('');
   const [resumeSummaryText, setResumeSummaryText] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -57,8 +61,14 @@ export default function CustomizationPage() {
       setIsFetchingData(true);
       getUserCustomization(user.uid)
         .then((data) => {
-          setCustomizationText(data?.customizationText || '');
-          setResumeSummaryText(data?.resumeSummary || '');
+          if (data) {
+            setFirstName(data.firstName || '');
+            setLastName(data.lastName || '');
+            setEmail(data.email || '');
+            setAddress(data.address || '');
+            setCustomizationText(data.customizationText || '');
+            setResumeSummaryText(data.resumeSummary || '');
+          }
         })
         .catch((error) => {
           console.error("Error fetching customization data:", error);
@@ -103,7 +113,7 @@ export default function CustomizationPage() {
                 description: "Please upload a PDF smaller than 5MB.",
             });
             setSelectedFile(null);
-            if(fileInputRef.current) fileInputRef.current.value = ""; // Reset file input
+            if(fileInputRef.current) fileInputRef.current.value = ""; 
             return;
         }
         setSelectedFile(file);
@@ -115,7 +125,7 @@ export default function CustomizationPage() {
           description: "Please upload a PDF file.",
         });
         setSelectedFile(null);
-        if(fileInputRef.current) fileInputRef.current.value = ""; // Reset file input
+        if(fileInputRef.current) fileInputRef.current.value = ""; 
       }
     }
   };
@@ -146,10 +156,9 @@ export default function CustomizationPage() {
       const dataUri = await fileToDataUri(selectedFile);
       const formData = new FormData();
       formData.append('resumePdfDataUri', dataUri);
-      formData.append('userId', user.uid); // Include userId
+      formData.append('userId', user.uid); 
 
-      // We are not using useActionState for this one, simple async call
-      const result = await summarizeResumeAction({}, formData); // Pass empty prev state
+      const result = await summarizeResumeAction({}, formData); 
 
       if (result.summary) {
         setResumeSummaryText(result.summary);
@@ -206,14 +215,41 @@ export default function CustomizationPage() {
       <form action={saveFormAction}>
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle className="font-headline text-xl sm:text-2xl">Your Customization</CardTitle>
+            <CardTitle className="font-headline text-xl sm:text-2xl">Your Customization Hub</CardTitle>
             <CardDescription>
-              Save your skills summary, personal bio, or any other information for the AI. Upload your resume for an AI-generated summary.
+              Manage your personal information, skills summary, and resume details for the AI.
             </CardDescription>
           </CardHeader>
           
           <CardContent className="space-y-6">
             <input type="hidden" name="userId" value={user.uid} />
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium flex items-center">
+                <UserCircle2 className="mr-2 h-5 w-5 text-primary" />
+                Personal Information
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                <div className="space-y-1">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input id="firstName" name="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="e.g., Jane" />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input id="lastName" name="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="e.g., Doe" />
+                </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input id="email" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="e.g., jane.doe@example.com" />
+                </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <Label htmlFor="address">Address (Optional)</Label>
+                  <Textarea id="address" name="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="e.g., 123 Main St, Anytown, USA" rows={2} className="min-h-[60px]" />
+                </div>
+              </div>
+            </div>
+            
+            <Separator />
             
             <div>
               <Label htmlFor="customizationText" className="text-base font-medium">
@@ -225,8 +261,8 @@ export default function CustomizationPage() {
                 value={customizationText}
                 onChange={(e) => setCustomizationText(e.target.value)}
                 placeholder="e.g., Senior software engineer with 10 years of experience..."
-                rows={10}
-                className="mt-2 min-h-[200px] resize-y"
+                rows={8}
+                className="mt-2 min-h-[150px] resize-y"
                 aria-describedby="customization-help"
               />
               <p id="customization-help" className="text-sm text-muted-foreground mt-1">
@@ -285,8 +321,8 @@ export default function CustomizationPage() {
                 value={resumeSummaryText}
                 onChange={(e) => setResumeSummaryText(e.target.value)}
                 placeholder="Resume summary will appear here after processing. You can edit it before saving."
-                rows={15}
-                className="mt-2 min-h-[250px] resize-y bg-muted/30"
+                rows={10}
+                className="mt-2 min-h-[200px] resize-y bg-muted/30"
                 aria-describedby="resume-summary-help"
               />
               <p id="resume-summary-help" className="text-sm text-muted-foreground mt-1">
