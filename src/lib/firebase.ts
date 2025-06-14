@@ -1,6 +1,6 @@
 // src/lib/firebase.ts
 import { initializeApp, getApp, getApps, type FirebaseApp } from 'firebase/app';
-import { getAuth, type Auth } from 'firebase/auth';
+import { getAuth, type Auth, updateProfile } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, type Firestore } from 'firebase/firestore';
 
 // Ensure your .env.local file has these variables defined.
@@ -15,7 +15,7 @@ const firebaseConfig = {
 
 // Initialize Firebase
 let app: FirebaseApp;
-let auth: Auth;
+let authInstance: Auth; // Renamed to avoid conflict with auth export
 let db: Firestore;
 
 if (!getApps().length) {
@@ -24,7 +24,7 @@ if (!getApps().length) {
   app = getApp();
 }
 
-auth = getAuth(app);
+authInstance = getAuth(app);
 db = getFirestore(app);
 
 // Firestore helper functions for user customization data
@@ -33,7 +33,10 @@ const USER_CUSTOMIZATION_COLLECTION = "Introbird_users";
 export async function saveUserCustomization(userId: string, customizationText: string, resumeSummary?: string): Promise<void> {
   if (!userId) throw new Error("User ID is required to save customization data.");
   const userDocRef = doc(db, USER_CUSTOMIZATION_COLLECTION, userId);
-  const dataToSave: { customizationText: string; resumeSummary?: string } = { customizationText };
+  const dataToSave: { customizationText: string; resumeSummary?: string, updatedAt?: Date } = { 
+    customizationText,
+    updatedAt: new Date()
+   };
   if (resumeSummary !== undefined) {
     dataToSave.resumeSummary = resumeSummary;
   }
@@ -54,5 +57,12 @@ export async function getUserCustomization(userId: string): Promise<{ customizat
   return { customizationText: null, resumeSummary: null };
 }
 
+export async function updateUserProfileName(authService: Auth, newName: string): Promise<void> {
+  if (!authService.currentUser) {
+    throw new Error("User not authenticated to update profile name.");
+  }
+  await updateProfile(authService.currentUser, { displayName: newName });
+}
 
-export { app, auth, db };
+
+export { app, authInstance as auth, db }; // Export renamed authInstance as auth

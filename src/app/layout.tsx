@@ -16,15 +16,18 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import AppHeader from '@/components/introbird/AppHeader';
-import { Settings, Palette as CustomizationIcon, Loader2, Home } from "lucide-react";
-import React from 'react';
+import { Settings as SettingsIcon, Palette as CustomizationIcon, Loader2, Home } from "lucide-react"; // Renamed Settings to SettingsIcon
+import React, { useState } from 'react'; // Added useState
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
-
+import { ThemeProvider } from '@/components/ThemeProvider'; // Added ThemeProvider
+import SettingsDialog from '@/components/settings/SettingsDialog'; // Added SettingsDialog
 
 const RootLayoutInternal = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   const { setOpenMobile, isMobile } = useSidebar();
+  const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
+
 
   if (loading) {
     return (
@@ -70,8 +73,13 @@ const RootLayoutInternal = ({ children }: { children: React.ReactNode }) => {
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-              <SidebarMenuButton tooltip="Settings">
-                <Settings />
+              <SidebarMenuButton 
+                tooltip="Settings" 
+                onClick={() => setIsSettingsDialogOpen(true)}
+                disabled={loading} // Disable if auth is still loading, user might not be available
+                aria-disabled={loading}
+              >
+                <SettingsIcon />
                 <span className="group-data-[state=collapsed]:hidden">Settings</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -84,6 +92,7 @@ const RootLayoutInternal = ({ children }: { children: React.ReactNode }) => {
           {children}
         </SidebarInset>
       </div>
+      {user && <SettingsDialog open={isSettingsDialogOpen} onOpenChange={setIsSettingsDialogOpen} />}
     </>
   );
 };
@@ -94,7 +103,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning> {/* suppressHydrationWarning for next-themes */}
       <head>
         <title>IntroBird - AI Email Assistant</title>
         <meta name="description" content="Generate email replies with AI" />
@@ -105,18 +114,14 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <AuthProvider>
-          <SidebarProvider defaultOpen={false}> {/* SidebarProvider now wraps RootLayoutInternal */}
-            <RootLayoutInternal>{children}</RootLayoutInternal>
-          </SidebarProvider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <SidebarProvider defaultOpen={false}> 
+              <RootLayoutInternal>{children}</RootLayoutInternal>
+            </SidebarProvider>
+          </ThemeProvider>
         </AuthProvider>
         <Toaster />
       </body>
     </html>
   );
 }
-
-// To avoid renaming RootLayoutContent everywhere it might be referenced internally by Next.js or other tooling,
-// I've wrapped the original RootLayoutContent logic into a new component RootLayoutInternal.
-// RootLayout now provides AuthProvider and then SidebarProvider, and RootLayoutInternal consumes them.
-// The component previously named RootLayoutContent is effectively now RootLayoutInternal.
-// No other file needs to change as the export from this file is still `RootLayout`.
